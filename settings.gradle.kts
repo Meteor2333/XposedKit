@@ -21,5 +21,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "XposedKit"
-include(":xposed-kit")
+include(":xposedkit")
  
