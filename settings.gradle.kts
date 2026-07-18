@@ -21,5 +21,10 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "XposedKit"
-include(":xposedkit")
- 
+include(
+    ":xposedkit",
+    ":xposedkit-gradle-plugin",
+    ":xposedkit-processor"
+)
+project(":xposedkit-gradle-plugin").projectDir = file("gradle-plugin")
+project(":xposedkit-processor").projectDir = file("processor")

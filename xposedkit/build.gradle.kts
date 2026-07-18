@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.library)
 }
 
+group = "cc.meteormc"
+version = "1.0.0"
+
 android {
     namespace = "cc.meteormc.xposedkit"
 
@@ -19,4 +22,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+}
+
+kotlin {
+    jvmToolchain(11)
+}
+
+dependencies {
+    compileOnly(libs.xposed.api)
+    compileOnly(libs.lsposed.api)
 }
