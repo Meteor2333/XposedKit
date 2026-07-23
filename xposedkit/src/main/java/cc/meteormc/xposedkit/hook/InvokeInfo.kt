@@ -7,8 +7,8 @@ data class InvokeInfo(
     val member: Member,
     val instance: Any?,
     val args: Array<Any?>,
-    val result: Any?,
-    val throwable: Throwable?
+    var result: Any?,
+    var throwable: Throwable?
 ) {
     fun <T> instance() = this.instance as T
 
@@ -21,8 +21,8 @@ data class InvokeInfo(
     fun longArg(index: Int = 0) = argByGenerics<Long>(index)
     fun shortArg(index: Int = 0) = argByGenerics<Short>(index)
     fun stringArg(index: Int = 0) = argByGenerics<String>(index)
-    fun <T> argByClass(type: Class<T>, index: Int = 0) = this.args.filterIsInstance(type).getOrNull(index)
-    inline fun <reified T> argByGenerics(index: Int = 0) = this.args.filterIsInstance<T>().getOrNull(index)
+    fun <T> argByClass(type: Class<T>, index: Int = 0) = this.args.filterIsInstance(type)[index]
+    inline fun <reified T> argByGenerics(index: Int = 0) = this.args.filterIsInstance<T>()[index]
 
     fun booleanArg(value: Boolean, index: Int = 0) = argByGenerics<Boolean>(value, index)
     fun byteArg(value: Byte, index: Int = 0) = argByGenerics<Byte>(value, index)
@@ -34,15 +34,13 @@ data class InvokeInfo(
     fun shortArg(value: Short, index: Int = 0) = argByGenerics<Short>(value, index)
     fun stringArg(value: String, index: Int = 0) = argByGenerics<String>(value, index)
     fun <T> argByClass(value: Any, type: Class<T>, index: Int = 0) = this.args.withIndex()
-        .filter { type.isInstance(it.value) }
-        .getOrNull(index)
-        ?.index
-        ?.let { args[it] = value }
+        .filter { type.isInstance(it.value) }[index]
+        .index
+        .let { args[it] = value }
     inline fun <reified T> argByGenerics(value: Any, index: Int = 0) = this.args.withIndex()
-        .filter { it.value is T }
-        .getOrNull(index)
-        ?.index
-        ?.let { args[it] = value }
+        .filter { it.value is T }[index]
+        .index
+        .let { args[it] = value }
 
     val booleanResult
         get() = this.result as Boolean
@@ -62,9 +60,9 @@ data class InvokeInfo(
         get() = this.result as Short
     val stringResult
         get() = this.result as String
-    fun <T> result() = this.result as T?
+    fun <T> result() = this.result as T
 
-    fun <T : Throwable> throwable() = this.throwable as T?
+    fun <T : Throwable> throwable() = this.throwable as T
 
     override fun equals(other: Any?) = other is InvokeInfo && this.member == other.member
 

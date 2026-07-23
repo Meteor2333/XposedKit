@@ -9,6 +9,8 @@ import java.lang.reflect.Member
 open class HookerContext(
     open val classLoader: ClassLoader
 ) {
+    val String.clazz: Class<*>?
+        get() = reflect?.delegate
     val String.reflect: Reflect<*>?
         get() = classLoader.reflect(this)
 

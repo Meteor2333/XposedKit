@@ -12,7 +12,8 @@ object Primitives {
         "short" to "S",
         "byte" to "B",
         "double" to "D",
-        "char" to "C"
+        "char" to "C",
+        "void" to "V"
     )
 
     /**
