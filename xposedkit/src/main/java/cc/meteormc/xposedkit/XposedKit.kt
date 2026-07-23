@@ -1,11 +1,13 @@
 package cc.meteormc.xposedkit
 
 import android.app.Application
-import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.AssetManager
+import android.content.res.Configuration
 import android.content.res.Resources
-import android.content.res.XModuleResources
+import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.util.DisplayMetrics
 import android.util.Log
 import cc.meteormc.xposedkit.hook.InvokeCallback
 import cc.meteormc.xposedkit.hook.InvokeInfo
@@ -13,6 +15,7 @@ import cc.meteormc.xposedkit.provider.RemoteFileProvider
 import cc.meteormc.xposedkit.provider.RemotePreferencesProvider
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
+import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.lang.reflect.Member
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -163,8 +166,32 @@ object XposedKit {
         )
     }
 
-    fun getModuleResources(context: Context): Resources {
-        return XModuleResources.createInstance(moduleSource, null)
+    fun createModuleResources(metrics: DisplayMetrics? = null, config: Configuration? = null): Resources {
+        val am = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            AssetManager::class.reflect { constructor()!!.new() }
+        } else {
+            HiddenApiBypass.newInstance(AssetManager::class.java) as AssetManager
+        }
+
+        @Suppress("DEPRECATION")
+        val resources = Resources(am, metrics, config)
+        addAssetPathToResources(resources, moduleSource)
+        return resources
+    }
+
+    fun addAssetPathToResources(resources: Resources, path: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            AssetManager::class.reflect {
+                method("addAssetPath")!!.invoke(resources.assets, path)
+            }
+        } else {
+            HiddenApiBypass.invoke(
+                AssetManager::class.java,
+                resources.assets,
+                "addAssetPath",
+                path
+            )
+        }
     }
 
     fun registerAppAttachListener(packageName: String, listener: (Application) -> Unit) {

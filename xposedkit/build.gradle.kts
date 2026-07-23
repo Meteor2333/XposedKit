@@ -29,6 +29,8 @@ kotlin {
 }
 
 dependencies {
-    compileOnly(libs.xposed.api)
+    compileOnly(libs.annotation)
     compileOnly(libs.lsposed.api)
+    compileOnly(libs.xposed.api)
+    api(libs.hidden.api.bypass)
 }

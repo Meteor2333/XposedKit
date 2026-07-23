@@ -1,6 +1,8 @@
 [versions]
 agp = "9.2.1"
+annotation = "1.10.0"
 devtoolsKsp = "2.3.9"
+hiddenapiBypass = "6.1"
 kotlin = "2.2.0"
 ksp = "2.3.9"
 xposed = "82"
@@ -12,8 +14,10 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 [libraries]
+annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
 android-build-tools = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 devtools-ksp = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "devtoolsKsp" }
+hidden-api-bypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapiBypass" }
 symbol-processing-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 xposed-api = { group = "de.robv.android.xposed", name = "api", version.ref = "xposed" }
 lsposed-api = { group = "cc.meteormc", name = "lsposed-api", version.ref = "lsposed" }
