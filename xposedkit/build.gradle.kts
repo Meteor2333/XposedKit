@@ -16,6 +16,7 @@ android {
 
     defaultConfig {
         minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     compileOptions {
@@ -26,6 +27,10 @@ android {
 
 kotlin {
     jvmToolchain(11)
+
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+    }
 }
 
 dependencies {
