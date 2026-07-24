@@ -80,6 +80,10 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(param: XC_LoadPackage.LoadPackageParam) {
+        if (param.packageName == XposedKit.modulePackage) {
+            return
+        }
+
         if (param.processName == "android") {
             val systemParam = SystemServerStartingParam(param.classLoader)
             XposedKit.mount { onSystemServerStarting(systemParam) }
