@@ -34,6 +34,7 @@ kotlin {
 }
 
 dependencies {
+    compileOnly(project(":xposedkit-hidden-api"))
     compileOnly(libs.annotation)
     compileOnly(libs.lsposed.api)
     compileOnly(libs.xposed.api)
