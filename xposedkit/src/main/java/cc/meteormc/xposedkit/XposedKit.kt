@@ -15,7 +15,6 @@ import cc.meteormc.xposedkit.provider.RemoteFileProvider
 import cc.meteormc.xposedkit.provider.RemotePreferencesProvider
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
-import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.lang.reflect.Member
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -166,31 +165,42 @@ object XposedKit {
         )
     }
 
-    fun createModuleResources(metrics: DisplayMetrics? = null, config: Configuration? = null): Resources {
-        val am = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            AssetManager::class.reflect { constructor()!!.new() }
-        } else {
-            HiddenApiBypass.newInstance(AssetManager::class.java) as AssetManager
-        }
-
+    fun createModuleResources(
+        metrics: DisplayMetrics? = null,
+        config: Configuration? = null,
+        copyFrom: AssetManager? = null
+    ): Resources {
+        val am = AssetManager::class.reflect { constructor()!!.new() }
         @Suppress("DEPRECATION")
         val resources = Resources(am, metrics, config)
         addAssetPathToResources(resources, moduleSource)
+
+        // Android 12+ 引入了 Fabricated Runtime Resources Overlay (FRRO) 机制
+        // 然而手动创建的 AssetManager 并不会自动注册 FRRO 资源
+        // 必须从另一个 AssetManager 中获取这些资源并手动添加到 AssetPath 中
+        if (copyFrom != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val assets = AssetManager::class.reflect {
+                method("getApkAssets")!!.call<Array<ApkAssets>>(copyFrom)
+            }
+
+            for (asset in assets) {
+                val path = asset.assetPath
+                if (!path.endsWith(".frro")) continue
+
+                // 必须使用 addOverlayPath, 否则不生效
+                // addAssetPathToResources(resources, path)
+                AssetManager::class.reflect {
+                    method("addOverlayPath")!!.call<Int>(am, path)
+                }
+            }
+        }
+
         return resources
     }
 
     fun addAssetPathToResources(resources: Resources, path: String) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            AssetManager::class.reflect {
-                method("addAssetPath")!!.invoke(resources.assets, path)
-            }
-        } else {
-            HiddenApiBypass.invoke(
-                AssetManager::class.java,
-                resources.assets,
-                "addAssetPath",
-                path
-            )
+        AssetManager::class.reflect {
+            method("addAssetPath")!!.call<Int>(resources.assets, path)
         }
     }
 
