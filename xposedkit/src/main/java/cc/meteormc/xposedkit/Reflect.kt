@@ -105,7 +105,9 @@ class Reflect<T : Any>(val delegate: Class<T>) {
         get() = delegate.constructors.setAccessible()
 
     val declaredConstructors
-        get() = delegate.declaredConstructors.setAccessible()
+        get() = delegate.declaredConstructors.map {
+            (it as Constructor<T>).setAccessible()
+        }
 
     fun method(name: String, vararg paramTypes: Class<*>) = methodCache.getOrPut(name + getParametersString(*paramTypes)) {
         firstRecursive {
@@ -115,7 +117,7 @@ class Reflect<T : Any>(val delegate: Class<T>) {
         }
     }
 
-    fun method(name: String) = methodCache.getOrPut(name) {
+    fun method(name: String) = methodCache.getOrPut("$name(*)") {
         method(name, *emptyArray<Class<*>>())?.let {
             return@getOrPut it
         }
@@ -131,6 +133,10 @@ class Reflect<T : Any>(val delegate: Class<T>) {
             ?.singleOrNull()
     }
 
+    fun method(vararg paramTypes: Class<*>) = methodCache.getOrPut(getParametersString(*paramTypes) + "(*)") {
+        methods(*paramTypes).singleOrNull()
+    }
+
     fun methods(name: String): List<Method> {
         val exists = mutableSetOf<String>()
         return findRecursive {
@@ -138,6 +144,17 @@ class Reflect<T : Any>(val delegate: Class<T>) {
                 // 仅保留继承链中最先匹配到的类的方法（优先子类）
                 // 忽略父类被覆盖的方法
                 name.contentEquals(method.name) && exists.add(method.signature())
+            }
+        }.flatten().setAccessible()
+    }
+
+    fun methods(vararg paramTypes: Class<*>): List<Method> {
+        val exists = mutableSetOf<String>()
+        return findRecursive {
+            it.declaredMethods.filter { method ->
+                // 仅保留继承链中最先匹配到的类的方法（优先子类）
+                // 忽略父类被覆盖的方法
+                paramTypes.contentEquals(method.parameterTypes) && exists.add(method.signature())
             }
         }.flatten().setAccessible()
     }
