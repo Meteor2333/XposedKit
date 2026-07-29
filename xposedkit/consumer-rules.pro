@@ -7,3 +7,14 @@
 -dontwarn android.content.res.XResources
 -dontwarn de.robv.android.xposed.**
 -dontwarn io.github.libxposed.**
+
+-dontwarn android.app.ActivityThread
+-dontwarn android.app.ActivityThread$ApplicationThread
+-dontwarn android.app.ActivityThread$ActivityClientRecord
+-dontwarn android.content.pm.PackageParser
+-dontwarn android.content.pm.PackageParser$Package
+-dontwarn android.content.pm.PackageParser$Activity
+-dontwarn android.content.pm.PackageParser$Provider
+-dontwarn android.content.pm.PackageParser$Service
+-dontwarn android.content.pm.PackageParser$PackageParserException
+-dontwarn android.content.res.ApkAssets
