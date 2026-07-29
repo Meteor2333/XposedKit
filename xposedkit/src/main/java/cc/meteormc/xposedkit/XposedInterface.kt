@@ -20,7 +20,7 @@ internal interface XposedInterface {
 
     val moduleSource: String
 
-    val moduleAppInfo: ApplicationInfo?
+    val moduleAppInfo: ApplicationInfo
 
     fun getRemotePrefs(name: String): SharedPreferences
 
@@ -48,7 +48,7 @@ internal interface XposedInterface {
         val values = mapOf(
             "level" to level,
             "level_short" to (level.firstOrNull() ?: "").toString(),
-            "module_package" to XposedKit.modulePackage,
+            "module_package" to XposedKit.modulePackageName,
             "tag" to tag,
             "message" to msg
         )

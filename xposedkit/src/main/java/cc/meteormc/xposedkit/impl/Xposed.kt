@@ -1,8 +1,7 @@
 package cc.meteormc.xposedkit.impl
 
-import android.app.AndroidAppHelper
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
+import android.content.pm.ApplicationInfo
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import cc.meteormc.xposedkit.XposedInterface
@@ -36,15 +35,12 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         get() = -1L
     override var moduleSource: String = ""
         get() = field.ifBlank { throw IllegalStateException("Module source is not set!") }
-    override val moduleAppInfo
-        get() = AndroidAppHelper.currentApplication()?.packageManager?.getPackageArchiveInfo(
-            moduleSource,
-            PackageManager.GET_META_DATA
-        )?.applicationInfo
+    override val moduleAppInfo: ApplicationInfo
+        get() = XposedKit.modulePackageInfo.applicationInfo
 
     override fun getRemotePrefs(name: String): SharedPreferences {
         return XSharedPreferences(
-            XposedKit.modulePackage,
+            XposedKit.modulePackageName,
             name
         ).apply {
             if (all.isNotEmpty()) return@apply
@@ -80,7 +76,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(param: XC_LoadPackage.LoadPackageParam) {
-        if (param.packageName == XposedKit.modulePackage) {
+        if (param.packageName == XposedKit.modulePackageName) {
             return
         }
 

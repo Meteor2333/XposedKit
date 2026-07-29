@@ -6,8 +6,6 @@ import cc.meteormc.xposedkit.param.HotReloadParam
 import cc.meteormc.xposedkit.param.SystemServerStartingParam
 
 interface XposedModule {
-    val modulePackage: String
-
     fun onProcessLoaded(param: ProcessLoadedParam) {
 
     }

@@ -2,6 +2,8 @@ package cc.meteormc.xposedkit
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.content.pm.PackageParser
+import android.content.res.ApkAssets
 import android.content.res.AssetManager
 import android.content.res.Configuration
 import android.content.res.Resources
@@ -15,6 +17,7 @@ import cc.meteormc.xposedkit.provider.RemoteFileProvider
 import cc.meteormc.xposedkit.provider.RemotePreferencesProvider
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
+import java.io.File
 import java.lang.reflect.Member
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -67,14 +70,35 @@ object XposedKit {
         get() = impl!!.moduleSource
 
     val moduleAppInfo
-        get() = impl?.moduleAppInfo
+        get() = impl!!.moduleAppInfo
 
-    val modulePackage
-        get() = moduleInstance.modulePackage
+    val moduleActivities
+        get() = modulePackageInfo.activities.map { it.info }
 
-    val moduleInstance by lazy {
+    val moduleReceivers
+        get() = modulePackageInfo.receivers.map { it.info }
+
+    val moduleProviders
+        get() = modulePackageInfo.providers.map { it.info }
+
+    val moduleServices
+        get() = modulePackageInfo.services.map { it.info }
+
+    val modulePackageName: String
+        get() = modulePackageInfo.packageName
+
+    internal val modulePackageInfo by lazy {
+        val source = File(moduleSource)
+        try {
+            PackageParser().parsePackage(source, 0)!!
+        } catch (e: PackageParser.PackageParserException) {
+            throw IllegalStateException("Failed to parse module package!", e)
+        }
+    }
+
+    internal val moduleInstance by lazy {
         val classLoader = javaClass.classLoader!!
-        // ServiceLoader不能直接适配 kotlin 的单例类, 所以改为自己实现
+        // ServiceLoader 不能直接适配 kotlin 的单例类, 所以改为自己实现
         // val services = ServiceLoader.load(XposedModule::class.java, classLoader)
         val services = classLoader
             .getResourceAsStream("META-INF/services/${XposedModule::class.java.name}")
