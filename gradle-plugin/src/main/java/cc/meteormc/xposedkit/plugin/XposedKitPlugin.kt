@@ -54,14 +54,14 @@ class XposedKitPlugin : Plugin<Project> {
                 GenerateManifestTask::output
             )
 
+            val staticRes = sources.res!!.static.get().flatten()
+            val resourcesOutput = variantDir.dir("resources")
             sources.resources!!.addGeneratedSourceDirectory(
-                tasks.register(
-                    "generateXposedKit${capitalizeName}Resources",
-                    GenerateResourcesTask::class.java
-                ) {
+                tasks.register<GenerateResourcesTask>("generateXposedKit${capitalizeName}Resources") {
                     dependsOn("ksp${capitalizeName}Kotlin")
                     metadataInput.set(metadataFile)
-                    output.set(variantDir.dir("resources"))
+                    this.staticRes.set(staticRes)
+                    this.output.set(resourcesOutput)
                 },
                 GenerateResourcesTask::output
             )
