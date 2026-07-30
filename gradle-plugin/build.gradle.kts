@@ -1,10 +1,8 @@
 plugins {
-    `kotlin-dsl`
     `java-gradle-plugin`
+    `kotlin-dsl`
+    `maven-publish`
 }
-
-group = "cc.meteormc"
-version = "1.0.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -27,7 +25,9 @@ dependencies {
 gradlePlugin {
     plugins {
         create("xposedkit") {
+            displayName = "XposedKit"
             id = "cc.meteormc.xposedkit.plugin"
+            description = "Xposed development toolkit"
             implementationClass = "cc.meteormc.xposedkit.plugin.XposedKitPlugin"
         }
     }

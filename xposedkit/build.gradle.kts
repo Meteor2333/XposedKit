@@ -1,9 +1,7 @@
 plugins {
+    `maven-publish`
     alias(libs.plugins.android.library)
 }
-
-group = "cc.meteormc"
-version = "1.0.0"
 
 android {
     namespace = "cc.meteormc.xposedkit"
@@ -39,4 +37,14 @@ dependencies {
     compileOnly(libs.lsposed.api)
     compileOnly(libs.xposed.api)
     api(libs.hidden.api.bypass)
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
 }

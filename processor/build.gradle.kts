@@ -1,10 +1,8 @@
 plugins {
+    `maven-publish`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ksp)
 }
-
-group = "cc.meteormc"
-version = "1.0.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -21,4 +19,14 @@ kotlin {
 
 dependencies {
     implementation(libs.symbol.processing.api)
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            afterEvaluate {
+                from(components["java"])
+            }
+        }
+    }
 }
