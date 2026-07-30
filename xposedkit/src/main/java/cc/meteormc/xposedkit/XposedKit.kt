@@ -104,6 +104,7 @@ object XposedKit {
             .getResourceAsStream("META-INF/services/${XposedModule::class.java.name}")
             .bufferedReader()
             .readLines()
+            .filter { it.isNotBlank() }
 
         if (services.isEmpty()) {
             throw IllegalStateException("No XposedModule implementation found!")
