@@ -1,16 +1,15 @@
 package cc.meteormc.xposedkit.plugin.task
 
+import cc.meteormc.xposedkit.plugin.util.Metadata
 import cc.meteormc.xposedkit.plugin.util.XmlUtil
-import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
-abstract class GenerateManifestTask : DefaultTask() {
+abstract class GenerateManifestTask : BaseTask() {
     companion object {
         const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
     }
@@ -18,14 +17,11 @@ abstract class GenerateManifestTask : DefaultTask() {
     @get:InputFile
     abstract val mainManifest: RegularFileProperty
 
-    @get:InputFile
-    abstract val metadataInput: RegularFileProperty
-
     @get:OutputFile
     abstract val output: RegularFileProperty
 
-    @TaskAction
-    fun generate() {
+    override fun execute() {
+        val metadata = parseMetadata()
         val document = XmlUtil.newDocument()
 
         val manifest = document.createElement("manifest")
@@ -45,13 +41,7 @@ abstract class GenerateManifestTask : DefaultTask() {
 
         document.createElement("meta-data").apply {
             setAttributeNS(ANDROID_NS, "name", "xposedminversion")
-            setAttributeNS(ANDROID_NS, "value", "93")
-            application.appendChild(this)
-        }
-
-        document.createElement("meta-data").apply {
-            setAttributeNS(ANDROID_NS, "name", "xposedscope")
-            setAttributeNS(ANDROID_NS, "resource", "@array/module_scopes")
+            setAttributeNS(ANDROID_NS, "value", metadata.getProperty(Metadata.MIN_API))
             application.appendChild(this)
         }
 
