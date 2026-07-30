@@ -6,6 +6,7 @@ import com.android.build.api.variant.AndroidComponentsExtension
 import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.register
 
 class XposedKitPlugin : Plugin<Project> {
     companion object {
@@ -41,15 +42,14 @@ class XposedKitPlugin : Plugin<Project> {
             val capitalizeName = variantName.replaceFirstChar(Char::titlecaseChar)
             val variantDir = generatedDir.dir(variantName)
 
+            val allManifests = sources.manifests.all.get()
+            val manifestOutput = variantDir.file("AndroidManifest.xml")
             sources.manifests.addGeneratedManifestFile(
-                tasks.register(
-                    "generateXposedKit${capitalizeName}Manifest",
-                    GenerateManifestTask::class.java
-                ) {
+                tasks.register<GenerateManifestTask>("generateXposedKit${capitalizeName}Manifest") {
                     dependsOn("ksp${capitalizeName}Kotlin")
-                    mainManifest.set(project.layout.projectDirectory.file("src/main/AndroidManifest.xml"))
                     metadataInput.set(metadataFile)
-                    output.set(variantDir.file("AndroidManifest.xml"))
+                    this.output.set(manifestOutput)
+                    this.allManifests.set(allManifests)
                 },
                 GenerateManifestTask::output
             )

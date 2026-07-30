@@ -2,20 +2,25 @@ package cc.meteormc.xposedkit.plugin.task
 
 import cc.meteormc.xposedkit.plugin.util.Metadata
 import cc.meteormc.xposedkit.plugin.util.XmlUtil
+import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.InputFile
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
 abstract class GenerateManifestTask : BaseTask() {
     companion object {
-        const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
+        private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
     }
 
-    @get:InputFile
-    abstract val mainManifest: RegularFileProperty
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val allManifests: ListProperty<RegularFile>
 
     @get:OutputFile
     abstract val output: RegularFileProperty
@@ -30,7 +35,7 @@ abstract class GenerateManifestTask : BaseTask() {
         val application = document.createElement("application")
         manifest.appendChild(application)
 
-        val description = parseDescription()
+        val description = scanDescription()
         if (!description.isNullOrEmpty()) {
             document.createElement("meta-data").apply {
                 setAttributeNS(ANDROID_NS, "name", "xposeddescription")
@@ -55,12 +60,17 @@ abstract class GenerateManifestTask : BaseTask() {
             )
     }
 
-    fun parseDescription(): String? {
-        return XmlUtil.parseDocument(mainManifest.get().asFile)
-            .getElementsByTagName("application")
-            .item(0)
-            ?.attributes
-            ?.getNamedItemNS(ANDROID_NS, "description")
-            ?.nodeValue
+    fun scanDescription(): String? {
+        return allManifests.get()
+            .map { it.asFile }
+            .filter { it.exists() }
+            .firstNotNullOfOrNull {
+                XmlUtil.parseDocument(it)
+                    .getElementsByTagName("application")
+                    .item(0)
+                    ?.attributes
+                    ?.getNamedItemNS(ANDROID_NS, "description")
+                    ?.nodeValue
+            }
     }
 }
