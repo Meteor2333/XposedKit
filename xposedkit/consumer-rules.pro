@@ -1,3 +1,8 @@
+# R8对这种文件的支持不好 很多时候并不能成功替换 所以暂时只能keep这个类
+# -adaptresourcefilecontents assets/xposed_init
+-keep,allowshrinking,allowoptimization class cc.meteormc.xposedkit.impl.Xposed
+-adaptresourcefilecontents META-INF/xposed/java_init.list
+
 -keep,allowoptimization,allowobfuscation class cc.meteormc.xposedkit.** { *; }
 -keep,allowoptimization,allowobfuscation class * extends cc.meteormc.xposedkit.XposedModule
 
