@@ -6,6 +6,6 @@
                 android:value="true" />
         <meta-data
                 android:name="xposedscope"
-                android:value="@array/module_scopes" />
+                android:resource="@array/module_scopes" />
     </application>
 </manifest>
