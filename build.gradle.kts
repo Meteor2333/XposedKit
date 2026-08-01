@@ -4,17 +4,63 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
 }
 
+val projectGroup = "cc.meteormc"
+val projectVersion = "1.0.0"
+
+val minSdkVersion = 24
+val targetSdkVersion = 37
+
 subprojects {
-    group = "cc.meteormc"
-    version = "1.0.0"
+    group = projectGroup
+    version = projectVersion
 
     plugins.withType<com.android.build.gradle.LibraryPlugin> {
         extensions.configure<com.android.build.api.dsl.LibraryExtension> {
+            compileSdk {
+                version = release(targetSdkVersion)
+            }
+
+            defaultConfig {
+                minSdk = minSdkVersion
+            }
+
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_11
+                targetCompatibility = JavaVersion.VERSION_11
+            }
+
             publishing {
                 singleVariant("release") {
                     withJavadocJar()
                     withSourcesJar()
                 }
+            }
+        }
+    }
+
+    plugins.withType<JavaPlugin> {
+        extensions.configure<JavaPluginExtension> {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }
+    }
+
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
+            jvmToolchain(11)
+
+            compilerOptions {
+                jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+            }
+        }
+    }
+
+    plugins.withId("org.jetbrains.kotlin.android") {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension> {
+            jvmToolchain(11)
+
+            compilerOptions {
+                jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
             }
         }
     }

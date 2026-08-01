@@ -9,14 +9,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
-kotlin {
-    jvmToolchain(11)
-
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-    }
-}
-
 dependencies {
     compileOnly(libs.android.build.tools)
     implementation(libs.devtools.ksp)
