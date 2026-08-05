@@ -31,4 +31,14 @@ open class HookerContext(
         XposedKit.hookAfter(this, callback)
         return this
     }
+
+    fun Iterable<Member>.hookBefore(callback: InvokeCallback): Iterable<Member> {
+        this.forEach { XposedKit.hookBefore(it, callback) }
+        return this
+    }
+
+    fun Iterable<Member>.hookAfter(callback: InvokeCallback): Iterable<Member> {
+        this.forEach { XposedKit.hookAfter(it, callback) }
+        return this
+    }
 }
