@@ -1,39 +1,25 @@
-#include <jni.h>
+module;
 
-#include "java_primitive.h"
+#include "jni.h"
 
+#include <atomic>
 #include <string>
 #include <vector>
 
-static jclass methodClass;
+export module xposedkit;
 
-static jmethodID declaringClsMid;
-static jmethodID paramTypesMid;
-static jmethodID returnTypeMid;
+import :java_primitive;
+import :jni_helper;
 
 extern "C"
 JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv* env;
-    vm->GetEnv((void**)&env, JNI_VERSION_1_6);
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
 
-    xposedkit::InitJavaPrimitive(env);
-
-    auto execClass = env->FindClass("java/lang/reflect/Executable");
-    auto methClass = env->FindClass("java/lang/reflect/Method");
-    methodClass = (jclass) env->NewGlobalRef(methClass);
-    declaringClsMid = env->GetMethodID(
-            execClass,
-            "getDeclaringClass",
-            "()Ljava/lang/Class;");
-    paramTypesMid = env->GetMethodID(
-            execClass,
-            "getParameterTypes",
-            "()[Ljava/lang/Class;");
-    returnTypeMid = env->GetMethodID(
-            methClass,
-            "getReturnType",
-            "()Ljava/lang/Class;");
+    xposedkit::InstallJniHelper(env);
 
     return JNI_VERSION_1_6;
 }
@@ -42,9 +28,11 @@ extern "C"
 JNIEXPORT void JNICALL
 JNI_OnUnload(JavaVM *vm, void *reserved) {
     JNIEnv* env;
-    vm->GetEnv((void**)&env, JNI_VERSION_1_6);
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return;
+    }
 
-    env->DeleteGlobalRef(methodClass);
+    xposedkit::UninstallJniHelper(env);
 }
 
 extern "C"
@@ -76,8 +64,8 @@ Java_cc_meteormc_xposedkit_nativelib_NativeBridge_CallNonvirtualMethod(JNIEnv *e
     }
 
     auto target = env->FromReflectedMethod(method);
-    auto clazz = (jclass) env->CallObjectMethod(method, declaringClsMid);
-    auto paramTypes = (jobjectArray) env->CallObjectMethod(method, paramTypesMid);
+    auto clazz = (jclass) env->CallObjectMethod(method, xposedkit::Method_Executable_declaringClass);
+    auto paramTypes = (jobjectArray) env->CallObjectMethod(method, xposedkit::Method_Executable_paramTypes);
 
     jsize length = env->GetArrayLength(paramTypes);
     if (length != env->GetArrayLength(args)) {
@@ -98,12 +86,12 @@ Java_cc_meteormc_xposedkit_nativelib_NativeBridge_CallNonvirtualMethod(JNIEnv *e
 
     env->DeleteLocalRef(paramTypes);
 
-    if (env->IsInstanceOf(method, methodClass)) {
+    if (env->IsInstanceOf(method, xposedkit::Class_Method)) {
         jvalue local{};
         jvalue* result = &local;
         auto returnType = xposedkit::GetPrimitiveType(
                 env,
-                (jclass) env->CallObjectMethod((jobject) method, returnTypeMid));
+                (jclass) env->CallObjectMethod((jobject) method, xposedkit::Method_Method_returnType));
         switch (returnType) {
             case xposedkit::PrimitiveType::Object:
                 return env->CallNonvirtualObjectMethodA(instance, clazz, target, cargs.data());
