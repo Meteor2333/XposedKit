@@ -1,14 +1,17 @@
 [versions]
 agp = "9.2.1"
 annotation = "1.10.0"
+coreKtx = "1.19.0"
 hiddenapiBypass = "6.1"
 kotlin = "2.3.0"
 ksp = "2.3.11"
+material = "1.14.0"
 shadow = "8.1.1"
 xposed = "82"
 lsposed = "102.0.0"
 
 [plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
@@ -17,8 +20,10 @@ shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 [libraries]
 annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
 android-build-tools = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 devtools-ksp = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 hidden-api-bypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapiBypass" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 symbol-processing-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 xposed-api = { group = "de.robv.android.xposed", name = "api", version.ref = "xposed" }
 lsposed-api = { group = "io.github.libxposed", name = "api", version.ref = "lsposed" }

@@ -23,12 +23,14 @@ dependencyResolutionManagement {
 rootProject.name = "XposedKit"
 include(
     ":xposedkit",
+    ":xposedkit-demo",
     ":xposedkit-gradle-plugin",
     ":xposedkit-hidden-api",
     ":xposedkit-jadx-plugin",
     ":xposedkit-native",
     ":xposedkit-processor"
 )
+project(":xposedkit-demo").projectDir = file("demo")
 project(":xposedkit-gradle-plugin").projectDir = file("gradle-plugin")
 project(":xposedkit-hidden-api").projectDir = file("hidden-api")
 project(":xposedkit-jadx-plugin").projectDir = file("jadx-plugin")
