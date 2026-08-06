@@ -1,0 +1,5 @@
+<resources>
+    <string-array name="module_scopes">
+        <item>com.android.systemui</item>
+    </string-array>
+</resources>
