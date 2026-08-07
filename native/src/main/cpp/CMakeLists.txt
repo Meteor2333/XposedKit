@@ -16,6 +16,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         FILES ${XPOSEDKIT_SRC_FILES}
 )
 
+add_subdirectory(external/openjdkjvmti)
+add_subdirectory(external/xdl)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+        openjdkjvmti_headers
+        xdl
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
