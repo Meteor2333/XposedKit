@@ -36,9 +36,20 @@ JNI_OnUnload(JavaVM *vm, void *reserved) {
 }
 
 extern "C"
+JNIEXPORT void JNICALL
+Java_cc_meteormc_xposedkit_nativelib_NativeBridge_Init(JNIEnv *env, jclass clazz) {
+
+}
+
+extern "C"
 JNIEXPORT jobject JNICALL
 Java_cc_meteormc_xposedkit_nativelib_NativeBridge_AllocObject(JNIEnv *env, jclass thiz,
                                                               jclass clazz) {
+    if (!clazz) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "clazz is null");
+        return nullptr;
+    }
+
     return env->AllocObject(clazz);
 }
 

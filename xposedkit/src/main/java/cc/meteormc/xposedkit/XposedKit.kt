@@ -13,6 +13,7 @@ import android.util.DisplayMetrics
 import android.util.Log
 import cc.meteormc.xposedkit.hook.InvokeCallback
 import cc.meteormc.xposedkit.hook.InvokeInfo
+import cc.meteormc.xposedkit.nativelib.NativeBridge
 import cc.meteormc.xposedkit.provider.RemoteFileProvider
 import cc.meteormc.xposedkit.provider.RemotePreferencesProvider
 import de.robv.android.xposed.XC_MethodHook
@@ -31,6 +32,7 @@ object XposedKit {
 
     internal fun init(impl: XposedInterface) {
         this.impl = impl
+        NativeBridge.Init()
     }
 
     internal fun prepare() {
