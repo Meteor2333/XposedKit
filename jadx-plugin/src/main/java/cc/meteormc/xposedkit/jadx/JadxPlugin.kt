@@ -17,7 +17,6 @@ import jadx.gui.utils.files.JadxFiles
 import jadx.plugins.tools.data.JadxInstalledPlugins
 import jadx.plugins.tools.utils.PluginFiles
 import org.slf4j.LoggerFactory
-import java.io.FileNotFoundException
 import java.lang.reflect.Type
 import java.nio.file.Files
 import java.nio.file.Path
@@ -60,6 +59,38 @@ class JadxPlugin : JadxPlugin {
         """
     }
 
+    private val jadxSettings by lazy {
+        if (!Files.exists(JadxFiles.GUI_CONF)) {
+            return@lazy JadxSettingsData()
+        }
+
+        Files.newBufferedReader(JadxFiles.GUI_CONF).use {
+            GsonUtils.defaultGsonBuilder()
+                .registerTypeAdapter(
+                    Path::class.java,
+                    object : JsonSerializer<Path>, JsonDeserializer<Path> {
+                        override fun serialize(
+                            src: Path,
+                            typeOfSrc: Type,
+                            context: JsonSerializationContext
+                        ): JsonElement {
+                            return JsonPrimitive(src.toString())
+                        }
+
+                        override fun deserialize(
+                            json: JsonElement,
+                            typeOfT: Type,
+                            context: JsonDeserializationContext
+                        ): Path {
+                            return Paths.get(json.asString)
+                        }
+                    }
+                )
+                .create()
+                .fromJson(it, JadxSettingsData::class.java)
+        }
+    }
+
     override fun getPluginInfo(): JadxPluginInfo = JadxPluginInfoBuilder
         .pluginId(PLUGIN_ID)
         .name(I18n.str("plugin.name"))
@@ -92,36 +123,6 @@ class JadxPlugin : JadxPlugin {
     private fun getAsciiArt(): String {
         if (!isJadxGUI()) return ""
         try {
-            if (!Files.exists(JadxFiles.GUI_CONF)) {
-                throw FileNotFoundException("Jadx GUI configuration file not found: ${JadxFiles.GUI_CONF}")
-            }
-
-            val settings = Files.newBufferedReader(JadxFiles.GUI_CONF).use {
-                GsonUtils.defaultGsonBuilder()
-                    .registerTypeAdapter(
-                        Path::class.java,
-                        object : JsonSerializer<Path>, JsonDeserializer<Path> {
-                            override fun serialize(
-                                src: Path,
-                                typeOfSrc: Type,
-                                context: JsonSerializationContext
-                            ): JsonElement {
-                                return JsonPrimitive(src.toString())
-                            }
-
-                            override fun deserialize(
-                                json: JsonElement,
-                                typeOfT: Type,
-                                context: JsonDeserializationContext
-                            ): Path {
-                                return Paths.get(json.asString)
-                            }
-                        }
-                    )
-                    .create()
-                    .fromJson(it, JadxSettingsData::class.java)
-            }
-
             var art = ASCII_ART
 
             // 不知道为什么要做这个 可能是太闲了
@@ -130,14 +131,14 @@ class JadxPlugin : JadxPlugin {
                 art = ASCII_ART_3D
             }
 
-            val uiFont = FontUtil.loadFont(settings.uiFontStr)
+            val uiFont = FontUtil.loadFont(jadxSettings.uiFontStr)
             if (!FontUtil.isMonospace(uiFont)) {
                 art = ASCII_ART_MONOSPACE
             }
 
             return art.trimIndent().prependIndent(" ".repeat(6))
         } catch (t: Throwable) {
-            LOG.warn("Failed to load ASCII art", t)
+            LOG.warn("Failed to load description ASCII art", t)
             return ""
         }
     }
