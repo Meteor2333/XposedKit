@@ -60,7 +60,7 @@ object ReflectCodeGenerator {
                     }
 
                     // 对象数组或多维数组 需要反射获取
-                    "\"${"[".repeat(count)}L$typeName;\".clazz"
+                    "${"${"[".repeat(count)}L$typeName;".quote()}.clazz"
                 }
             } else if (it.isGeneric) {
                 it.`object`.formatReference(true)
@@ -84,10 +84,10 @@ object ReflectCodeGenerator {
         }
         val innerCode = if (params.isNotEmpty() && methods.any { it != node && it.name == name && it.argTypes != params }) {
             // 如果存在同名的且非重写的重载方法，则额外使用参数类型来区分
-            "\n\"$name\",${buildParams()}"
+            "\n${name.quote()},${buildParams()}"
         } else {
             // 否则直接使用方法名称匹配即可
-            "\"$name\""
+            name.quote()
         }
 
         return clazz.rawName().createLambda(
@@ -97,7 +97,7 @@ object ReflectCodeGenerator {
 
     private fun generateField(node: FieldNode): String {
         return node.declaringClass.rawName().createLambda(
-            "field(\"${node.name}\")"
+            "field(${node.name.quote()})"
         )
     }
 
@@ -108,6 +108,18 @@ object ReflectCodeGenerator {
 
     private fun String.capitalize(): String {
         return replaceFirstChar { s -> s.titlecase() }
+    }
+
+    private fun String.quote(): String {
+        val str = this
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+            .replace("\b", "\\b")
+        // 直接使用插值前缀来转义$
+        return "${if (contains('$')) "$$" else ""}\"$str\""
     }
 
     private fun String.isBootClass(): Boolean {
@@ -135,8 +147,7 @@ object ReflectCodeGenerator {
             } + "::class"
         } else {
             suffix = ".clazz!!"
-            // 使用插值前缀来转义内部类符号
-            "${if (contains('$')) "$$" else ""}\"$this\""
+            quote()
         } + if (toClass) {
             suffix
         } else {
