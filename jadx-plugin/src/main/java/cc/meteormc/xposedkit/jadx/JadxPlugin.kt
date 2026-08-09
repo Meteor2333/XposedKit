@@ -69,7 +69,7 @@ class JadxPlugin : JadxPlugin {
 
     override fun init(context: JadxPluginContext) {
         val gui = context.guiContext
-        if (gui == null) {
+        if (!isJadxGUI() || gui == null) {
             LOG.error("Only supports Jadx GUI")
             return
         }
@@ -85,7 +85,12 @@ class JadxPlugin : JadxPlugin {
         refreshPluginDetail()
     }
 
+    private fun isJadxGUI(): Boolean {
+        return runCatching { Class.forName("jadx.gui.JadxGUI") }.isSuccess
+    }
+
     private fun getAsciiArt(): String {
+        if (!isJadxGUI()) return ""
         try {
             if (!Files.exists(JadxFiles.GUI_CONF)) {
                 throw FileNotFoundException("Jadx GUI configuration file not found: ${JadxFiles.GUI_CONF}")
@@ -138,6 +143,7 @@ class JadxPlugin : JadxPlugin {
     }
 
     private fun refreshPluginDetail() {
+        if (!isJadxGUI()) return
         try {
             val gson = GsonUtils.buildGson()
             val plugins = Files.newBufferedReader(PluginFiles.PLUGINS_JSON).use {
