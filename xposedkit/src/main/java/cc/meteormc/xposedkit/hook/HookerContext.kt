@@ -10,7 +10,7 @@ open class HookerContext(
     open val classLoader: ClassLoader
 ) {
     val String.clazz: Class<*>?
-        get() = reflect?.delegate
+        get() = reflect?.type
     val String.reflect: Reflect<*>?
         get() = classLoader.reflect(this)
 

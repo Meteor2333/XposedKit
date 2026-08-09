@@ -82,14 +82,14 @@ fun <T : Any, R> ClassLoader.typedReflect(className: String, block: Reflect<T>.(
     return typedReflect<T>(className)?.run(block)
 }
 
-class Reflect<T : Any>(val delegate: Class<T>) {
+class Reflect<T : Any>(val type: Class<T>) {
     private val constructorCache = mutableMapOf<String, Constructor<*>?>()
     private val methodCache = mutableMapOf<String, Method?>()
     private val fieldCache = mutableMapOf<String, Field?>()
 
     val singleton by lazy {
         runCatching {
-            delegate.getDeclaredField("INSTANCE")
+            type.getDeclaredField("INSTANCE")
         }.getOrNull()?.takeIf {
             Modifier.isStatic(it.modifiers)
         }?.get<T>(null)
@@ -97,15 +97,15 @@ class Reflect<T : Any>(val delegate: Class<T>) {
 
     fun constructor(vararg paramTypes: Class<*>) = constructorCache.getOrPut(getParametersString(*paramTypes)) {
         runCatching {
-            delegate.getDeclaredConstructor(*paramTypes).setAccessible()
+            type.getDeclaredConstructor(*paramTypes).setAccessible()
         }.getOrNull()
     } as? Constructor<T>
 
     val constructors
-        get() = delegate.constructors.setAccessible()
+        get() = type.constructors.setAccessible()
 
     val declaredConstructors
-        get() = delegate.declaredConstructors.map {
+        get() = type.declaredConstructors.map {
             (it as Constructor<T>).setAccessible()
         }
 
@@ -160,10 +160,10 @@ class Reflect<T : Any>(val delegate: Class<T>) {
     }
 
     val methods
-        get() = delegate.methods.setAccessible()
+        get() = type.methods.setAccessible()
 
     val declaredMethods
-        get() = delegate.declaredMethods.setAccessible()
+        get() = type.declaredMethods.setAccessible()
 
     fun field(name: String) = fieldCache.getOrPut(name) {
         firstRecursive {
@@ -180,17 +180,17 @@ class Reflect<T : Any>(val delegate: Class<T>) {
     }.flatten().setAccessible()
 
     val fields
-        get() = delegate.fields.setAccessible()
+        get() = type.fields.setAccessible()
 
     val declaredFields
-        get() = delegate.declaredFields.setAccessible()
+        get() = type.declaredFields.setAccessible()
 
     private fun getParametersString(vararg clazzes: Class<*>): String {
         return "(${clazzes.joinToString(",") { it.name }})"
     }
 
     private inline fun <R> firstRecursive(func: (clazz: Class<*>) -> R?): R? {
-        var superClass: Class<*> = delegate
+        var superClass: Class<*> = type
         do {
             func(superClass)?.let { return it }
         } while ((superClass.getSuperclass()?.also { superClass = it }) != null)
@@ -199,7 +199,7 @@ class Reflect<T : Any>(val delegate: Class<T>) {
 
     private inline fun <R> findRecursive(func: (clazz: Class<*>) -> R?): List<R> {
         val result = mutableListOf<R>()
-        var superClass: Class<*> = delegate
+        var superClass: Class<*> = type
         do {
             func(superClass)?.let { result.add(it) }
         } while ((superClass.getSuperclass()?.also { superClass = it }) != null)
