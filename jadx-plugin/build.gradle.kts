@@ -13,6 +13,10 @@ dependencies {
 }
 
 tasks {
+    jar {
+        archiveFileName.set("xposedkit-extension.jar")
+    }
+
     val shadowJar = withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
         minimize()
         archiveClassifier.set("") // remove '-all' suffix
