@@ -14,6 +14,8 @@ import jadx.api.plugins.JadxPluginInfoBuilder
 import jadx.core.utils.GsonUtils
 import jadx.gui.settings.JadxSettingsData
 import jadx.gui.utils.files.JadxFiles
+import jadx.plugins.tools.data.JadxInstalledPlugins
+import jadx.plugins.tools.utils.PluginFiles
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.lang.reflect.Type
@@ -79,6 +81,8 @@ class JadxPlugin : JadxPlugin {
             val code = ReflectCodeGenerator.generate(node)
             gui.copyToClipboard(code)
         }
+
+        refreshPluginDetail()
     }
 
     private fun getAsciiArt(): String {
@@ -130,6 +134,28 @@ class JadxPlugin : JadxPlugin {
         } catch (t: Throwable) {
             LOG.warn("Failed to load ASCII art", t)
             return ""
+        }
+    }
+
+    private fun refreshPluginDetail() {
+        try {
+            val gson = GsonUtils.buildGson()
+            val plugins = Files.newBufferedReader(PluginFiles.PLUGINS_JSON).use {
+                gson.fromJson(it, JadxInstalledPlugins::class.java)
+            }
+
+            val currentPlugin = pluginInfo
+            for (plugin in plugins.installed) {
+                if (plugin.pluginId != currentPlugin.pluginId) continue
+                plugin.name = currentPlugin.name
+                plugin.description = currentPlugin.description
+            }
+
+            Files.newBufferedWriter(PluginFiles.PLUGINS_JSON).use {
+                gson.toJson(plugins, it)
+            }
+        } catch (t: Throwable) {
+            LOG.warn("Failed to refresh plugin detail, but you can ignore it", t)
         }
     }
 }
