@@ -5,6 +5,7 @@ devtoolsKsp = "2.3.9"
 hiddenapiBypass = "6.1"
 kotlin = "2.3.21"
 ksp = "2.3.9"
+shadow = "8.1.1"
 xposed = "82"
 lsposed = "compat-1.1"
 
@@ -12,6 +13,7 @@ lsposed = "compat-1.1"
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 
 [libraries]
 annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
