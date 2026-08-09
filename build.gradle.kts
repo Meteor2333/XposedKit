@@ -80,3 +80,9 @@ subprojects {
         }
     }
 }
+
+tasks.register<Delete>("clean") {
+    val layout = rootProject.layout
+    delete(layout.buildDirectory)
+    delete(layout.projectDirectory.dir(".kotlin"))
+}
