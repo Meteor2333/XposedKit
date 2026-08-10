@@ -4,6 +4,10 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import cc.meteormc.xposedkit.hook.HookHandle
+import cc.meteormc.xposedkit.hook.HookType
+import cc.meteormc.xposedkit.hook.InvokeCallback
+import java.lang.reflect.Member
 
 internal interface XposedInterface {
     companion object {
@@ -21,6 +25,13 @@ internal interface XposedInterface {
     val moduleSource: String
 
     val moduleAppInfo: ApplicationInfo
+
+    fun hook(
+        member: Member,
+        type: HookType,
+        priority: Int,
+        callback: InvokeCallback
+    ): HookHandle
 
     fun getRemotePrefs(name: String): SharedPreferences
 

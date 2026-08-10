@@ -7,7 +7,8 @@ import cc.meteormc.xposedkit.typedReflect
 import java.lang.reflect.Member
 
 open class HookerContext(
-    open val classLoader: ClassLoader
+    open val classLoader: ClassLoader,
+    protected val handles: MutableMap<Member, MutableList<HookHandle>> = mutableMapOf()
 ) {
     val String.clazz: Class<*>?
         get() = reflect?.type
@@ -22,23 +23,30 @@ open class HookerContext(
         return classLoader.typedReflect(this, block)
     }
 
-    fun Member.hookBefore(callback: InvokeCallback): Member {
-        XposedKit.hookBefore(this, callback)
+    fun Member.hook(type: HookType, priority: Int = InvokeCallback.PRIORITY_NORMAL, callback: InvokeCallback): Member {
+        val handle = XposedKit.impl!!.hook(this, type, priority, callback)
+        handles.getOrPut(this) { mutableListOf() } += handle
         return this
     }
 
-    fun Member.hookAfter(callback: InvokeCallback): Member {
-        XposedKit.hookAfter(this, callback)
+    fun Member.hookBefore(priority: Int = InvokeCallback.PRIORITY_NORMAL, callback: InvokeCallback): Member {
+        return hook(HookType.BEFORE, priority, callback)
+    }
+
+    fun Member.hookAfter(priority: Int = InvokeCallback.PRIORITY_NORMAL, callback: InvokeCallback): Member {
+        return hook(HookType.AFTER, priority, callback)
+    }
+
+    fun <T : Iterable<Member>> T.hook(type: HookType, callback: InvokeCallback): T {
+        forEach { it.hook(type, InvokeCallback.PRIORITY_NORMAL, callback) }
         return this
     }
 
-    fun Iterable<Member>.hookBefore(callback: InvokeCallback): Iterable<Member> {
-        this.forEach { XposedKit.hookBefore(it, callback) }
-        return this
+    fun <T : Iterable<Member>> T.hookBefore(callback: InvokeCallback): T {
+        return hook(HookType.BEFORE, callback)
     }
 
-    fun Iterable<Member>.hookAfter(callback: InvokeCallback): Iterable<Member> {
-        this.forEach { XposedKit.hookAfter(it, callback) }
-        return this
+    fun <T : Iterable<Member>> T.hookAfter(callback: InvokeCallback): T {
+        return hook(HookType.AFTER, callback)
     }
 }

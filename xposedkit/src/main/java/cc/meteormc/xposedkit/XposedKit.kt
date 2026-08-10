@@ -11,17 +11,15 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.DisplayMetrics
 import android.util.Log
+import cc.meteormc.xposedkit.hook.HookType
 import cc.meteormc.xposedkit.hook.InvokeCallback
-import cc.meteormc.xposedkit.hook.InvokeInfo
 import cc.meteormc.xposedkit.nativelib.NativeBridge
 import cc.meteormc.xposedkit.provider.RemoteFileProvider
 import cc.meteormc.xposedkit.provider.RemotePreferencesProvider
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import java.io.File
-import java.lang.reflect.Member
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
+
 
 object XposedKit {
     const val TAG = "XposedKit"
@@ -36,11 +34,15 @@ object XposedKit {
     }
 
     internal fun prepare() {
-        hookAfter(Application::class.reflect.method("attach")!!) {
+        impl!!.hook(
+            Application::class.reflect.method("attach")!!,
+            HookType.AFTER,
+            InvokeCallback.PRIORITY_HIGHEST
+        ) {
             val application = it.instance<Application>()
             attachedApplications[application.packageName] = application
 
-            val listeners = appAttachListeners.remove(application.packageName) ?: return@hookAfter
+            val listeners = appAttachListeners.remove(application.packageName) ?: return@hook
             synchronized(listeners) {
                 listeners.toList()
             }.forEach { listener ->
@@ -152,44 +154,6 @@ object XposedKit {
                 return impl?.getRemoteFiles().orEmpty()
             }
         }
-    }
-
-    fun hookBefore(member: Member, callback: InvokeCallback): XC_MethodHook.Unhook {
-        return XposedBridge.hookMethod(
-            member,
-            object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    callback(
-                        InvokeInfo(
-                            param.method,
-                            param.thisObject,
-                            param.args,
-                            param.result,
-                            param.throwable
-                        )
-                    )
-                }
-            }
-        )
-    }
-
-    fun hookAfter(member: Member, callback: InvokeCallback): XC_MethodHook.Unhook {
-        return XposedBridge.hookMethod(
-            member,
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    callback(
-                        InvokeInfo(
-                            param.method,
-                            param.thisObject,
-                            param.args,
-                            param.result,
-                            param.throwable
-                        )
-                    )
-                }
-            }
-        )
     }
 
     fun createModuleResources(

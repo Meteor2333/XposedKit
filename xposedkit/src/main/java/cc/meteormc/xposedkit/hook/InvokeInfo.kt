@@ -3,13 +3,20 @@ package cc.meteormc.xposedkit.hook
 import java.lang.reflect.Member
 
 @Suppress("UNCHECKED_CAST")
-data class InvokeInfo(
+class InvokeInfo(
     val member: Member,
     val instance: Any?,
     val args: Array<Any?>,
-    var result: Any?,
-    var throwable: Throwable?
+    result: Any?,
+    val thrown: Throwable?
 ) {
+    internal var hasChanged = false
+    var result = result
+        set(value) {
+            field = value
+            hasChanged = true
+        }
+
     fun <T> instance() = this.instance as T
 
     fun booleanArg(index: Int = 0) = argByGenerics<Boolean>(index)
@@ -62,9 +69,13 @@ data class InvokeInfo(
         get() = this.result as String
     fun <T> result() = this.result as T
 
-    fun <T : Throwable> throwable() = this.throwable as T
+    fun <T : Throwable> thrown() = this.thrown as T
 
     override fun equals(other: Any?) = other is InvokeInfo && this.member == other.member
 
     override fun hashCode() = this.member.hashCode()
+
+    override fun toString(): String {
+        return "InvokeInfo(member=$member, instance=$instance, args=${args.contentToString()}, result=$result, thrown=$thrown, hasChanged=$hasChanged)"
+    }
 }
