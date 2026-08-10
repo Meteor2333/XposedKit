@@ -11,6 +11,7 @@ import cc.meteormc.xposedkit.hook.HookHandle
 import cc.meteormc.xposedkit.hook.HookType
 import cc.meteormc.xposedkit.hook.InvokeCallback
 import cc.meteormc.xposedkit.hook.InvokeInfo
+import cc.meteormc.xposedkit.nativelib.NativeBridge
 import cc.meteormc.xposedkit.param.PackageLoadedParam
 import cc.meteormc.xposedkit.param.ProcessLoadedParam
 import cc.meteormc.xposedkit.param.SystemServerStartingParam
@@ -21,7 +22,9 @@ import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import java.io.FileNotFoundException
+import java.lang.reflect.Constructor
 import java.lang.reflect.Member
+import java.lang.reflect.Method
 import java.util.concurrent.CopyOnWriteArrayList
 
 class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
@@ -120,6 +123,30 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         val insertIndex = handles.indexOfFirst { it.priority < priority }.takeIf { it >= 0 } ?: handles.size
         handles.add(insertIndex, handle)
         return handle
+    }
+
+    override fun invokeOriginal(member: Member, obj: Any?, vararg args: Any?): Any? {
+        return XposedBridge.invokeOriginalMethod(member, obj, args)
+    }
+
+    override fun invokeSpecial(member: Member, obj: Any, vararg args: Any?): Any? {
+        if (member !is Constructor<*> && member !is Method) {
+            throw IllegalArgumentException("Member must be a Constructor or Method!")
+        }
+
+        if (!NativeBridge.isLoaded) {
+            var result: Any? = obj
+            val builder = StringBuilder("NativeBridge is not available!")
+            if (member is Method) {
+                builder.append(" The method will be invoked directly instead.")
+                result = member.invoke(obj, *args)
+            }
+
+            XLog.w(XposedKit.TAG, builder.toString())
+            return result
+        }
+
+        return NativeBridge.CallNonvirtualMethod(member, obj, *args)
     }
 
     override fun getRemotePrefs(name: String): SharedPreferences {

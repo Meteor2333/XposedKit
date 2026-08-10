@@ -15,8 +15,10 @@ import cc.meteormc.xposedkit.param.HotReloadParam
 import cc.meteormc.xposedkit.param.PackageLoadedParam
 import cc.meteormc.xposedkit.param.ProcessLoadedParam
 import cc.meteormc.xposedkit.param.SystemServerStartingParam
+import java.lang.reflect.Constructor
 import java.lang.reflect.Executable
 import java.lang.reflect.Member
+import java.lang.reflect.Method
 import io.github.libxposed.api.XposedInterface as LSPInterface
 import io.github.libxposed.api.XposedModule as LSPModule
 import io.github.libxposed.api.XposedModuleInterface as LSPLifecycle
@@ -102,6 +104,16 @@ class LSPosed : XposedInterface, LSPModule() {
         }
     }
 
+    override fun invokeOriginal(member: Member, obj: Any?, vararg args: Any?): Any? {
+        return member.toInvoker()
+            .setType(LSPInterface.Invoker.Type.ORIGIN)
+            .invoke(obj, *args)
+    }
+
+    override fun invokeSpecial(member: Member, obj: Any, vararg args: Any?): Any? {
+        return member.toInvoker().invokeSpecial(obj, *args)
+    }
+
     override fun getRemotePrefs(name: String): SharedPreferences {
         return getRemotePreferences(name)
     }
@@ -172,5 +184,15 @@ class LSPosed : XposedInterface, LSPModule() {
             param.savedInstanceState
         )
         XposedKit.mount { onHotReloadNew(reloadParam) }
+    }
+
+    private fun Member.toInvoker(): LSPInterface.Invoker<out LSPInterface.Invoker<*, out Executable>, out Executable> {
+        return when (this) {
+            is Method -> getInvoker(this)
+            is Constructor<*> -> getInvoker(this)
+            else -> {
+                throw IllegalArgumentException("Member must be an Executable in LSPosed framework")
+            }
+        }
     }
 }

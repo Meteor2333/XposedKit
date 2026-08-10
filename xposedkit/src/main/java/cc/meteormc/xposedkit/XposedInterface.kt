@@ -28,6 +28,10 @@ internal interface XposedInterface {
         callback: InvokeCallback
     ): HookHandle
 
+    fun invokeOriginal(member: Member, obj: Any?, vararg args: Any?): Any?
+
+    fun invokeSpecial(member: Member, obj: Any, vararg args: Any?): Any?
+
     fun getRemotePrefs(name: String): SharedPreferences
 
     fun getRemoteFile(name: String): ParcelFileDescriptor

@@ -2,6 +2,7 @@
 
 package cc.meteormc.xposedkit
 
+import cc.meteormc.xposedkit.nativelib.NativeBridge
 import cc.meteormc.xposedkit.util.Primitives
 import java.lang.reflect.AccessibleObject
 import java.lang.reflect.Constructor
@@ -10,6 +11,7 @@ import java.lang.reflect.Member
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.WeakHashMap
+import kotlin.jvm.Throws
 import kotlin.reflect.KClass
 
 private val cache = WeakHashMap<Class<*>, Reflect<*>>()
@@ -253,12 +255,45 @@ fun Member.signature(): String {
     return "$name(${parameterTypes.joinToString(",") { it.name }})"
 }
 
-fun <T> Constructor<T>.new(vararg args: Any?): T {
+@Throws(IllegalStateException::class)
+fun <T : Any> Class<T>.allocate(): T {
+    if (!NativeBridge.isLoaded) {
+        throw IllegalStateException("NativeBridge is not available!")
+    }
+
+    return NativeBridge.AllocObject<T>(this)
+}
+
+fun <T : Any> Class<T>.findInstances(): List<T> {
+    if (!NativeBridge.isLoaded) {
+        return emptyList()
+    }
+
+    return NativeBridge.VisitHeapObjects(this).toList()
+}
+
+fun <T : Any> Constructor<T>.new(vararg args: Any?): T {
     return this.setAccessible().newInstance(*args)
+}
+
+fun <T : Any> Constructor<T>.call(obj: T, vararg args: Any?): T {
+    setAccessible()
+    XposedKit.impl!!.invokeSpecial(this, obj, *args)
+    return obj
 }
 
 fun <T> Method.call(obj: Any?, vararg args: Any?): T {
     return this.setAccessible().invoke(obj, *args) as T
+}
+
+fun <T> Method.callOriginal(obj: Any?, vararg args: Any?): T {
+    setAccessible()
+    return XposedKit.impl!!.invokeOriginal(this, obj, *args) as T
+}
+
+fun <T> Method.callSpecial(obj: Any, vararg args: Any?): T {
+    setAccessible()
+    return XposedKit.impl!!.invokeSpecial(this, obj, *args) as T
 }
 
 fun <T> Field.get(obj: Any?): T {
