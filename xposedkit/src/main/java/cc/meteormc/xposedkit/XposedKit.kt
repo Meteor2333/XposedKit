@@ -20,7 +20,6 @@ import java.io.File
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 
-
 object XposedKit {
     const val TAG = "XposedKit"
 
