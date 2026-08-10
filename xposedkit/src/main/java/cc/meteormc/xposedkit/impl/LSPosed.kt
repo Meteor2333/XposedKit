@@ -1,34 +1,25 @@
 package cc.meteormc.xposedkit.impl
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import cc.meteormc.xposedkit.XposedInterface
 import cc.meteormc.xposedkit.XposedKit
+import cc.meteormc.xposedkit.hook.HookHandle
+import cc.meteormc.xposedkit.hook.HookType
+import cc.meteormc.xposedkit.hook.InvokeCallback
 import cc.meteormc.xposedkit.param.HotReloadParam
 import cc.meteormc.xposedkit.param.PackageLoadedParam
 import cc.meteormc.xposedkit.param.ProcessLoadedParam
 import cc.meteormc.xposedkit.param.SystemServerStartingParam
 import io.github.libxposed.api.XposedModuleInterface
-import io.github.libxposed.api.XposedInterface as LSPInterface
+import java.lang.reflect.Member
 import io.github.libxposed.api.XposedModule as LSPModule
 
-class LSPosed : XposedInterface, LSPModule {
-    constructor() : super()
-
-    constructor(base: LSPInterface, param: XposedModuleInterface.ModuleLoadedParam) : super(base, param) {
-        onModuleLoaded(param)
-    }
-
+class LSPosed : XposedInterface, LSPModule() {
     override val apiVer: Int
-        get() = runCatching {
-            apiVersion
-        }.getOrElse {
-            // The method is not implemented, which means the API version is 100 or below.
-            @Suppress("DEPRECATION") API
-        }
+        get() = apiVersion
     override val frameworkLabel: String
         get() = frameworkName
     override val frameworkVer: String
@@ -38,36 +29,18 @@ class LSPosed : XposedInterface, LSPModule {
     override val moduleSource: String
         get() = moduleAppInfo.sourceDir
     override val moduleAppInfo: ApplicationInfo
-        get() = runCatching {
-            moduleApplicationInfo
-        }.getOrElse {
-            applicationInfo
-        }
+        get() = moduleApplicationInfo
 
     override fun getRemotePrefs(name: String): SharedPreferences {
-        return runCatching {
-            getRemotePreferences(name)
-        }.getOrElse {
-            getSharedPreferences(name, Context.MODE_PRIVATE)
-        }
+        return getRemotePreferences(name)
     }
 
     override fun getRemoteFile(name: String): ParcelFileDescriptor {
-        return runCatching {
-            openRemoteFile(name)
-        }.getOrElse {
-            openFileInput(name).use { input ->
-                ParcelFileDescriptor.dup(input.getFD())
-            }
-        }
+        return openRemoteFile(name)
     }
 
     override fun getRemoteFiles(): List<String> {
-        return runCatching {
-            listRemoteFiles()
-        }.getOrElse {
-            fileList()
-        }.toList()
+        return listRemoteFiles().toList()
     }
 
     override fun printLog(
@@ -76,18 +49,10 @@ class LSPosed : XposedInterface, LSPModule {
         msg: String,
         tr: Throwable?
     ) {
-        runCatching {
-            if (tr != null) {
-                log(priority, tag, msg, tr)
-            } else {
-                log(priority, tag, msg)
-            }
-        }.onFailure {
-            if (tr != null) {
-                log(formatLog(priority, tag, msg), tr)
-            } else {
-                log(formatLog(priority, tag, msg))
-            }
+        if (tr != null) {
+            log(priority, tag, msg, tr)
+        } else {
+            log(priority, tag, msg)
         }
     }
 
@@ -96,29 +61,6 @@ class LSPosed : XposedInterface, LSPModule {
         if (param.isSystemServer) return
         val processParam = ProcessLoadedParam(param.processName)
         XposedKit.mount { onProcessLoaded(processParam) }
-    }
-
-    override fun onPackageLoaded(param: XposedModuleInterface.PackageLoadedParam) {
-        val classLoader = try {
-            @Suppress("DEPRECATION")
-            param.classLoader
-        } catch (e: NoSuchMethodError) {
-            // API 101+
-            return
-        }
-
-        if (param.isFirstPackage) {
-            XposedKit.prepare()
-        }
-
-        val packageParam = PackageLoadedParam(
-            param.packageName,
-            classLoader,
-            param.applicationInfo,
-            null,
-            param.isFirstPackage
-        )
-        XposedKit.mount { onPackageLoaded(packageParam) }
     }
 
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) {
@@ -134,13 +76,6 @@ class LSPosed : XposedInterface, LSPModule {
             param.isFirstPackage
         )
         XposedKit.mount { onPackageLoaded(packageParam) }
-    }
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Deprecated in API101+")
-    override fun onSystemServerLoaded(param: XposedModuleInterface.SystemServerLoadedParam) {
-        val systemParam = SystemServerStartingParam(param.classLoader)
-        XposedKit.mount { onSystemServerStarting(systemParam) }
     }
 
     override fun onSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {

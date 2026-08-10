@@ -6,7 +6,7 @@ kotlin = "2.3.0"
 ksp = "2.3.11"
 shadow = "8.1.1"
 xposed = "82"
-lsposed = "compat-1.1"
+lsposed = "102.0.0"
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
@@ -21,4 +21,4 @@ devtools-ksp = { group = "com.google.devtools.ksp", name = "com.google.devtools.
 hidden-api-bypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapiBypass" }
 symbol-processing-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 xposed-api = { group = "de.robv.android.xposed", name = "api", version.ref = "xposed" }
-lsposed-api = { group = "cc.meteormc", name = "lsposed-api", version.ref = "lsposed" }
+lsposed-api = { group = "io.github.libxposed", name = "api", version.ref = "lsposed" }
