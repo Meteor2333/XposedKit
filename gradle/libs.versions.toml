@@ -1,7 +1,6 @@
 [versions]
 agp = "9.2.1"
 annotation = "1.10.0"
-devtoolsKsp = "2.3.9"
 hiddenapiBypass = "6.1"
 kotlin = "2.3.0"
 ksp = "2.3.11"
@@ -18,7 +17,7 @@ shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 [libraries]
 annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
 android-build-tools = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
-devtools-ksp = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "devtoolsKsp" }
+devtools-ksp = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 hidden-api-bypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapiBypass" }
 symbol-processing-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 xposed-api = { group = "de.robv.android.xposed", name = "api", version.ref = "xposed" }
