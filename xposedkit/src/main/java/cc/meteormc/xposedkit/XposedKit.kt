@@ -29,7 +29,17 @@ object XposedKit {
 
     internal fun init(impl: XposedInterface) {
         this.impl = impl
-        NativeBridge.Init()
+        if (NativeBridge.isLoaded) {
+            NativeBridge.Init()
+        } else {
+            XLog.w(
+                TAG,
+                "Unable to load XposedKit native library. " +
+                        "Make sure the native library for the current ABI is included and libxposedkit.so has not been excluded, " +
+                        "some features may not work properly!",
+                NativeBridge.error
+            )
+        }
     }
 
     internal fun prepare() {

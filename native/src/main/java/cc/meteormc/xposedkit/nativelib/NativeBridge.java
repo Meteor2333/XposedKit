@@ -3,8 +3,16 @@ package cc.meteormc.xposedkit.nativelib;
 import java.lang.reflect.Executable;
 
 public class NativeBridge {
+    public static boolean isLoaded = false;
+    public static UnsatisfiedLinkError error;
+
     static {
-        System.loadLibrary("xposedkit");
+        try {
+            System.loadLibrary("xposedkit");
+            isLoaded = true;
+        } catch (UnsatisfiedLinkError e) {
+            error = e;
+        }
     }
 
     public static native void Init();
