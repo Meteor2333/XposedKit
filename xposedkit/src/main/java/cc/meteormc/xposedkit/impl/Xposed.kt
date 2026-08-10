@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import cc.meteormc.xposedkit.XLog
 import cc.meteormc.xposedkit.XposedInterface
 import cc.meteormc.xposedkit.XposedKit
 import cc.meteormc.xposedkit.hook.HookHandle
@@ -146,12 +147,30 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         msg: String,
         tr: Throwable?
     ) {
-        var formatedLog = formatLog(priority, tag, msg)
+        val level = when (priority) {
+            Log.VERBOSE -> "VERBOSE"
+            Log.DEBUG -> "DEBUG"
+            Log.INFO -> "INFO"
+            Log.WARN -> "WARN"
+            Log.ERROR -> "ERROR"
+            Log.ASSERT -> "ASSERT"
+            else -> ""
+        }
+        val values = mapOf(
+            "level" to level,
+            "level_short" to (level.firstOrNull() ?: "").toString(),
+            "module_package" to XposedKit.modulePackageName,
+            "tag" to tag,
+            "message" to msg
+        )
+        var formated = "%(\\w+)%".toRegex().replace(XLog.pattern) {
+            values[it.groupValues[1]] ?: it.value
+        }
         if (tr != null) {
-            formatedLog += "\n${Log.getStackTraceString(tr)}"
+            formated += "\n${Log.getStackTraceString(tr)}"
         }
 
-        XposedBridge.log(formatedLog)
+        XposedBridge.log(formated)
     }
 
     override fun initZygote(param: IXposedHookZygoteInit.StartupParam) {
