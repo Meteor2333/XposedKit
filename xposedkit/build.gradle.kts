@@ -13,6 +13,7 @@ android {
 
 dependencies {
     compileOnly(project(":xposedkit-hidden-api"))
+    implementation(project(":xposedkit-native"))
 
     compileOnly(libs.annotation)
     api(libs.hidden.api.bypass)
