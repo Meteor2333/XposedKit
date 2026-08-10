@@ -22,6 +22,14 @@ android {
     }
 }
 
+tasks.named<Delete>("clean") {
+    val projectDirectory = layout.projectDirectory
+    delete(
+        projectDirectory.dir(".cxx"),
+        projectDirectory.dir(".externalNativeBuild")
+    )
+}
+
 publishing {
     publications {
         register<MavenPublication>("release") {
