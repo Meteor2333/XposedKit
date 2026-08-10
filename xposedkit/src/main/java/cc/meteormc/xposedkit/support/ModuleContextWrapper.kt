@@ -38,7 +38,7 @@ open class ModuleContextWrapper(
             Context::class.java
                 .classLoader!!
                 .reflect("android.app.ContextImpl")
-                ?.delegate
+                ?.type
         }
     }
 
