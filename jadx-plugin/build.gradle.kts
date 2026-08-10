@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+//noinspection UseTomlInstead
 dependencies {
     compileOnly("io.github.skylot:jadx-core:1.5.6")
     compileOnly("io.github.skylot:jadx-cli:1.5.6")
