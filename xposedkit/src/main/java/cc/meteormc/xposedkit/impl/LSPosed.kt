@@ -145,11 +145,13 @@ class LSPosed : XposedInterface, LSPModule() {
             // 则可以认为它们是同一个钩子（哪怕实际上可能不是同一个）
             // 所以可以直接替换
             val previousHandle = previousHookHandles[member]?.let {
-                it.firstOrNull { handle ->
-                    val id = handle.id ?: return@firstOrNull false
+                it.indexOfFirst { handle ->
+                    val id = handle.id ?: return@indexOfFirst false
                     HookIdentifier.fromId(id) == identifier
-                }?.apply {
-                    it.remove(this)
+                }.takeIf { idx ->
+                    idx in it.indices
+                }?.let { idx ->
+                    it.removeAt(idx)
                 }
             }
 
