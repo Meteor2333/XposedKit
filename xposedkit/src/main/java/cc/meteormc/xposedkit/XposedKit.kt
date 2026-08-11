@@ -27,8 +27,8 @@ object XposedKit {
     private val appAttachListeners = ConcurrentHashMap<String, MutableSet<(Application) -> Unit>>()
 
     internal fun init(impl: XposedInterface, isNativeInitialized: Boolean = false) {
-        XLog.d(TAG, "Initializing XposedKit with implementation: ${impl::class.java.name}, isNativeInitialized=$isNativeInitialized")
         this.impl = impl
+        XLog.d(TAG, "Initializing XposedKit with implementation: ${impl::class.java.name}, isNativeInitialized=$isNativeInitialized")
         if (isNativeInitialized) {
             NativeBridge.Reload()
         } else if (NativeBridge.isLoaded) {
