@@ -19,6 +19,7 @@ import cc.meteormc.xposedkit.param.HotReloadingParam
 import cc.meteormc.xposedkit.param.PackageLoadedParam
 import cc.meteormc.xposedkit.param.ProcessLoadedParam
 import cc.meteormc.xposedkit.param.SystemServerStartingParam
+import cc.meteormc.xposedkit.util.WeakDelegate
 import java.lang.ref.WeakReference
 import java.lang.reflect.Constructor
 import java.lang.reflect.Executable
@@ -47,6 +48,7 @@ class LSPosed : XposedInterface, LSPModule() {
 
     private var isHotReloading = AtomicBoolean(false)
     private var previousHookHandles = ConcurrentHashMap<Member, MutableList<LSPInterface.HookHandle>>()
+    private var systemServerClassLoader by WeakDelegate<ClassLoader>()
     private val appPackages = mutableMapOf<String, RuntimePackage>()
 
     private data class RuntimePackage(
@@ -240,6 +242,7 @@ class LSPosed : XposedInterface, LSPModule() {
         XLog.v(TAG, "System server starting")
         val systemParam = SystemServerStartingParam(param.classLoader)
         XposedKit.mount { onSystemServerStarting(systemParam) }
+        systemServerClassLoader = param.classLoader
     }
 
     override fun onHotReloading(param: LSPLifecycle.HotReloadingParam): Boolean {
@@ -271,8 +274,8 @@ class LSPosed : XposedInterface, LSPModule() {
 
         param.setSavedInstanceState(
             HashMap<String, Any?>().apply {
-                put("extras", param.extras)
                 put("savedData", reloadParam.savedData)
+                put("systemServerClassLoader", systemServerClassLoader)
                 put("packages", packages)
             }
         )
@@ -291,6 +294,7 @@ class LSPosed : XposedInterface, LSPModule() {
         val oldHookHandles = param.oldHookHandles
         val state = param.savedInstanceState as Map<String, Any?>
         val savedData = state["savedData"]
+        val systemServerClassLoader = state["systemServerClassLoader"] as? ClassLoader?
         val packages = state["packages"] as? Map<String, Map<String, Any?>>?
         if (packages == null) {
             XLog.w(TAG, "No packages found in savedInstanceState, skipping onHotReloaded")
@@ -343,6 +347,15 @@ class LSPosed : XposedInterface, LSPModule() {
                     isFirstPackage
                 )
                 onPackageLoaded(param)
+            }
+        }
+
+        if (systemServerClassLoader != null) {
+            XLog.v(TAG, "Loading new hooks for system server")
+            this.systemServerClassLoader = systemServerClassLoader
+            XposedKit.mount {
+                val param = SystemServerStartingParam(systemServerClassLoader)
+                onSystemServerStarting(param)
             }
         }
 
