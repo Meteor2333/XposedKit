@@ -3,6 +3,7 @@ package cc.meteormc.xposedkit
 import android.util.Log
 
 object XLog {
+    var level = Log.INFO
     /**
      * %level% - 完整的日志等级 (如INFO WARN等)
      * %level_short% - 简短的日志等级 (如I W等)
@@ -33,6 +34,7 @@ object XLog {
     }
 
     private fun print(priority: Int, tag: String, msg: String, tr: Throwable?) {
+        if (priority < level) return
         XposedKit.impl.printLog(priority, tag, msg, tr)
     }
 }
