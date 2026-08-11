@@ -64,6 +64,12 @@ Java_cc_meteormc_xposedkit_nativelib_NativeBridge_Init(JNIEnv *env, jclass clazz
 }
 
 extern "C"
+JNIEXPORT void JNICALL
+Java_cc_meteormc_xposedkit_nativelib_NativeBridge_Reload(JNIEnv *env, jclass clazz) {
+    xposedkit::ReloadJniHelper(env);
+}
+
+extern "C"
 JNIEXPORT jobject JNICALL
 Java_cc_meteormc_xposedkit_nativelib_NativeBridge_AllocObject(JNIEnv *env, jclass thiz,
                                                               jclass clazz) {

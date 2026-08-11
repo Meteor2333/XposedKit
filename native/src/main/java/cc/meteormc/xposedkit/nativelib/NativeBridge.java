@@ -17,6 +17,8 @@ public class NativeBridge {
 
     public static native void Init();
 
+    public static native void Reload();
+
     public static native <T> T AllocObject(Class<T> clazz);
 
     public static native Object CallNonvirtualMethod(Executable method, Object instance, Object... args);
