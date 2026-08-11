@@ -9,6 +9,7 @@ import androidx.annotation.RequiresApi
 import cc.meteormc.xposedkit.XLog
 import cc.meteormc.xposedkit.XposedInterface
 import cc.meteormc.xposedkit.XposedKit
+import cc.meteormc.xposedkit.XposedKit.TAG
 import cc.meteormc.xposedkit.hook.HookHandle
 import cc.meteormc.xposedkit.hook.HookType
 import cc.meteormc.xposedkit.hook.InvokeCallback
@@ -211,11 +212,14 @@ class LSPosed : XposedInterface, LSPModule() {
     override fun onModuleLoaded(param: LSPLifecycle.ModuleLoadedParam) {
         XposedKit.init(this)
         XposedKit.prepare()
+        XLog.v(TAG, "Module loaded: processName=${param.processName}, isSystemServer=${param.isSystemServer}")
+
         val processParam = ProcessLoadedParam(param.processName, param.isSystemServer)
         XposedKit.mount { onProcessLoaded(processParam) }
     }
 
     override fun onPackageReady(param: LSPLifecycle.PackageReadyParam) {
+        XLog.v(TAG, "Package ready: packageName=${param.packageName}, isFirstPackage=${param.isFirstPackage}")
         val packageParam = PackageLoadedParam(
             param.packageName,
             param.classLoader,
@@ -233,11 +237,13 @@ class LSPosed : XposedInterface, LSPModule() {
     }
 
     override fun onSystemServerStarting(param: LSPLifecycle.SystemServerStartingParam) {
+        XLog.v(TAG, "System server starting")
         val systemParam = SystemServerStartingParam(param.classLoader)
         XposedKit.mount { onSystemServerStarting(systemParam) }
     }
 
     override fun onHotReloading(param: LSPLifecycle.HotReloadingParam): Boolean {
+        XLog.v(TAG, "Hot reloading: extras=${param.extras}")
         val reloadParam = HotReloadingParam(
             param.extras,
             null
@@ -278,21 +284,22 @@ class LSPosed : XposedInterface, LSPModule() {
 
     @Suppress("UNCHECKED_CAST")
     override fun onHotReloaded(param: LSPLifecycle.HotReloadedParam) {
+        XLog.v(TAG, "Hot reloaded: extras=${param.extras}, processName=${param.processName}, isSystemServer=${param.isSystemServer}")
+        val oldHookHandles = param.oldHookHandles
         val state = param.savedInstanceState as Map<String, Any?>
         val savedData = state["savedData"]
         val packages = state["packages"] as? Map<String, Map<String, Any?>>?
         if (packages == null) {
-            XLog.w(XposedKit.TAG, "No packages found in savedInstanceState, skipping onHotReloaded")
+            XLog.w(TAG, "No packages found in savedInstanceState, skipping onHotReloaded")
             return
         }
 
+        val oldHookSize = oldHookHandles.size
+        XLog.v(TAG, "Found $oldHookSize old hook handles from previous module code")
+
         isHotReloading.set(true)
         previousHookHandles.clear()
-        previousHookHandles.putAll(
-            param.oldHookHandles
-                .groupBy { it.executable }
-                .mapValues { it.value.toMutableList() }
-        )
+        previousHookHandles.putAll(oldHookHandles.groupBy { it.executable }.mapValues { it.value.toMutableList() })
 
         XposedKit.init(this, true)
         XposedKit.mount {
@@ -307,6 +314,7 @@ class LSPosed : XposedInterface, LSPModule() {
             onProcessLoaded(param)
         }
 
+        XLog.v(TAG, "Loading new hooks for ${packages.size} packages")
         packages.forEach {
             val packageName = it.key
             val wrapper = it.value
@@ -338,7 +346,10 @@ class LSPosed : XposedInterface, LSPModule() {
         }
 
         isHotReloading.set(false)
-        previousHookHandles.values.flatten().forEach {
+        previousHookHandles.values.flatten().apply {
+            XLog.v(TAG, "Replaced ${oldHookSize - size} old hook handles")
+            XLog.v(TAG, "Cleaning up $size old hook handles that were not replaced during hot reload")
+        }.forEach {
             // 清除剩余的没有被替换的旧Hook
             it.unhook()
         }

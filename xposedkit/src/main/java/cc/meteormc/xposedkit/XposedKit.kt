@@ -10,7 +10,6 @@ import android.content.res.Resources
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.DisplayMetrics
-import android.util.Log
 import cc.meteormc.xposedkit.hook.HookType
 import cc.meteormc.xposedkit.hook.InvokeCallback
 import cc.meteormc.xposedkit.nativelib.NativeBridge
@@ -28,6 +27,7 @@ object XposedKit {
     private val appAttachListeners = ConcurrentHashMap<String, MutableSet<(Application) -> Unit>>()
 
     internal fun init(impl: XposedInterface, isNativeInitialized: Boolean = false) {
+        XLog.d(TAG, "Initializing XposedKit with implementation: ${impl::class.java.name}, isNativeInitialized=$isNativeInitialized")
         this.impl = impl
         if (isNativeInitialized) {
             NativeBridge.Reload()
@@ -131,23 +131,28 @@ object XposedKit {
         var result: XposedModule? = null
         for (service in services) {
             if (result != null) {
-                Log.w(TAG, "Multiple XposedModule implementations found, ignoring $service")
+                XLog.w(TAG, "Multiple XposedModule implementations found, ignoring $service")
                 continue
             }
 
             val reflect = classLoader.typedReflect<XposedModule>(service)
             if (reflect == null) {
-                Log.w(TAG, "XposedModule implementation $service not found, skipping it")
+                XLog.w(TAG, "XposedModule implementation $service not found, skipping it")
                 continue
             }
 
             result = reflect.singleton ?: reflect.constructor()?.new()
             if (result == null) {
-                Log.w(TAG, "XposedModule implementation $service does not have a no-arg constructor, skipping it")
+                XLog.w(TAG, "XposedModule implementation $service does not have a no-arg constructor, skipping it")
             }
         }
 
-        result ?: throw IllegalStateException("No valid XposedModule implementation found!")
+        if (result != null) {
+            XLog.d(TAG, "Found XposedModule implementation: ${result::class.java.name}")
+            return@lazy result
+        }
+
+        throw IllegalStateException("No valid XposedModule implementation found!")
     }
 
     val remotePreferences by lazy {
