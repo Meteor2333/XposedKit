@@ -284,7 +284,10 @@ class LSPosed : XposedInterface, LSPModule() {
 
     @Suppress("UNCHECKED_CAST")
     override fun onHotReloaded(param: LSPLifecycle.HotReloadedParam) {
+        XposedKit.init(this, true)
+        XposedKit.prepare()
         XLog.v(TAG, "Hot reloaded: extras=${param.extras}, processName=${param.processName}, isSystemServer=${param.isSystemServer}")
+
         val oldHookHandles = param.oldHookHandles
         val state = param.savedInstanceState as Map<String, Any?>
         val savedData = state["savedData"]
@@ -300,8 +303,6 @@ class LSPosed : XposedInterface, LSPModule() {
         isHotReloading.set(true)
         previousHookHandles.clear()
         previousHookHandles.putAll(oldHookHandles.groupBy { it.executable }.mapValues { it.value.toMutableList() })
-
-        XposedKit.init(this, true)
         XposedKit.mount {
             val param = ProcessLoadedParam(
                 param.processName,
