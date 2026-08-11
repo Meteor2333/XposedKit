@@ -101,9 +101,12 @@ object XposedKit {
         get() = modulePackageInfo.packageName
 
     internal val modulePackageInfo by lazy {
-        val source = File(moduleSource)
+        val source = File(moduleSource).parentFile
         try {
-            PackageParser().parsePackage(source, 0)!!
+            PackageParser().parsePackage(source, 0).apply {
+                applicationInfo.sourceDir = moduleSource
+                applicationInfo.publicSourceDir = applicationInfo.sourceDir
+            }
         } catch (e: PackageParser.PackageParserException) {
             throw IllegalStateException("Failed to parse module package!", e)
         }
