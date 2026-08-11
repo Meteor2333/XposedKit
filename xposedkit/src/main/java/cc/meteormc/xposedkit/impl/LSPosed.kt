@@ -141,16 +141,12 @@ class LSPosed : XposedInterface, LSPModule() {
 
     override fun onModuleLoaded(param: LSPLifecycle.ModuleLoadedParam) {
         XposedKit.init(this)
-        if (param.isSystemServer) return
-        val processParam = ProcessLoadedParam(param.processName)
+        XposedKit.prepare()
+        val processParam = ProcessLoadedParam(param.processName, param.isSystemServer)
         XposedKit.mount { onProcessLoaded(processParam) }
     }
 
     override fun onPackageReady(param: LSPLifecycle.PackageReadyParam) {
-        if (param.isFirstPackage) {
-            XposedKit.prepare()
-        }
-
         val packageParam = PackageLoadedParam(
             param.packageName,
             param.classLoader,

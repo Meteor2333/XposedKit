@@ -210,14 +210,18 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
         if (param.processName == "android") {
+            val processParam = ProcessLoadedParam(param.processName, true)
             val systemParam = SystemServerStartingParam(param.classLoader)
-            XposedKit.mount { onSystemServerStarting(systemParam) }
+            XposedKit.mount {
+                onProcessLoaded(processParam)
+                onSystemServerStarting(systemParam)
+            }
             return
         }
 
         if (param.isFirstApplication) {
             XposedKit.prepare()
-            val processParam = ProcessLoadedParam(param.processName)
+            val processParam = ProcessLoadedParam(param.processName, false)
             XposedKit.mount { onProcessLoaded(processParam) }
         }
 

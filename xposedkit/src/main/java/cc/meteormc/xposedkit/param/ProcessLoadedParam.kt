@@ -1,5 +1,6 @@
 package cc.meteormc.xposedkit.param
 
 data class ProcessLoadedParam(
-    val processName: String
+    val processName: String,
+    val isSystemServer: Boolean
 )
