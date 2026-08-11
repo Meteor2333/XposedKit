@@ -5,4 +5,5 @@ object Metadata {
     const val TARGET_API = "targetApi"
     const val STATIC_SCOPE = "staticScope"
     const val AUTO_HOT_RELOAD = "autoHotReload"
+    const val SETTINGS_ACTIVITY = "settingsActivity"
 }

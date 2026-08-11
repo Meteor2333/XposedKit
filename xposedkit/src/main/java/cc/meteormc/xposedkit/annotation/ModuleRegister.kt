@@ -1,4 +1,4 @@
-package cc.meteormc.xposedkit
+package cc.meteormc.xposedkit.annotation
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)

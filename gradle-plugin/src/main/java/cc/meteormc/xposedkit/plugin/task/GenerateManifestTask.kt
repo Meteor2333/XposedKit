@@ -50,6 +50,26 @@ abstract class GenerateManifestTask : BaseTask() {
             application.appendChild(this)
         }
 
+        val settingsActivity = metadata.getProperty(Metadata.SETTINGS_ACTIVITY)
+        if (!settingsActivity.isNullOrBlank()) {
+            val activity = document.createElement("activity").apply {
+                setAttributeNS(ANDROID_NS, "name", metadata.getProperty(Metadata.SETTINGS_ACTIVITY))
+                setAttributeNS(ANDROID_NS, "exported", "true")
+                application.appendChild(this)
+            }
+            val filter = document.createElement("intent-filter").apply {
+                activity.appendChild(this)
+            }
+            document.createElement("action").apply {
+                setAttributeNS(ANDROID_NS, "name", "android.intent.action.MAIN")
+                filter.appendChild(this)
+            }
+            document.createElement("category").apply {
+                setAttributeNS(ANDROID_NS, "name", "de.robv.android.xposed.category.MODULE_SETTINGS")
+                filter.appendChild(this)
+            }
+        }
+
         val outputFile = output.get().asFile
         outputFile.parentFile.mkdirs()
         TransformerFactory.newInstance()

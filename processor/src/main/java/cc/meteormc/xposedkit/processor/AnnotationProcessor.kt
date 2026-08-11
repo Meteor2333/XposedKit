@@ -21,14 +21,19 @@ class AnnotationProcessor(
         private const val METADATA_OUTPUT_OPTION = "metadataOutput"
 
         private const val XPOSED_MODULE_CLASS_NAME = "cc.meteormc.xposedkit.XposedModule"
-        private const val MODULE_REGISTER_CLASS_NAME = "cc.meteormc.xposedkit.ModuleRegister"
+        private const val MODULE_REGISTER_CLASS_NAME = "cc.meteormc.xposedkit.annotation.ModuleRegister"
+        private const val MODULE_SETTINGS_ACTIVITY_CLASS_NAME = "cc.meteormc.xposedkit.annotation.ModuleSettingsActivity"
     }
 
     private val moduleClasses = mutableListOf<KSClassDeclaration>()
+    private val settingsActivityClasses = mutableListOf<KSClassDeclaration>()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         moduleClasses.addAll(
             resolver.getSymbolsWithAnnotation(MODULE_REGISTER_CLASS_NAME).filterIsInstance<KSClassDeclaration>()
+        )
+        settingsActivityClasses.addAll(
+            resolver.getSymbolsWithAnnotation(MODULE_SETTINGS_ACTIVITY_CLASS_NAME).filterIsInstance<KSClassDeclaration>()
         )
 
         return emptyList()
@@ -40,6 +45,7 @@ class AnnotationProcessor(
 
         val metadata = Properties()
         processModuleAnnotation(metadata)
+        processSettingsActivityAnnotation(metadata)
         metadataOutput.bufferedWriter().use {
             metadata.store(it, null)
         }
@@ -74,5 +80,12 @@ class AnnotationProcessor(
                 it.name!!.asString() to it.value.toString()
             }
         )
+    }
+
+    private fun processSettingsActivityAnnotation(metadata: Properties) {
+        logger.info("processSettingsActivityAnnotation: $settingsActivityClasses")
+
+        val settingsActivity = settingsActivityClasses.firstOrNull() ?: return
+        metadata["settingsActivity"] = settingsActivity.qualifiedName!!.asString()
     }
 }
