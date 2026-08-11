@@ -35,10 +35,17 @@ class AnnotationProcessor(
     }
 
     override fun finish() {
-        processModuleAnnotation()
+        val metadataOutput = options[METADATA_OUTPUT_OPTION]?.let { File(it) } ?: return
+        metadataOutput.parentFile.mkdirs()
+
+        val metadata = Properties()
+        processModuleAnnotation(metadata)
+        metadataOutput.bufferedWriter().use {
+            metadata.store(it, null)
+        }
     }
 
-    private fun processModuleAnnotation() {
+    private fun processModuleAnnotation(metadata: Properties) {
         logger.info("processModuleAnnotation: $moduleClasses")
 
         if (moduleClasses.isEmpty()) {
@@ -60,19 +67,12 @@ class AnnotationProcessor(
             it.write(moduleClass.qualifiedName!!.asString())
         }
 
-        val metadataOutput = options[METADATA_OUTPUT_OPTION]?.let { File(it) } ?: return
-        metadataOutput.parentFile.mkdirs()
-        Properties().apply {
-            putAll(
-                moduleClass.annotations.first {
-                    it.annotationType.resolve().declaration.qualifiedName?.asString() == MODULE_REGISTER_CLASS_NAME
-                }.arguments.associate {
-                    it.name!!.asString() to it.value.toString()
-                }
-            )
-        }.store(
-            metadataOutput.bufferedWriter(),
-            null
+        metadata.putAll(
+            moduleClass.annotations.first {
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == MODULE_REGISTER_CLASS_NAME
+            }.arguments.associate {
+                it.name!!.asString() to it.value.toString()
+            }
         )
     }
 }
