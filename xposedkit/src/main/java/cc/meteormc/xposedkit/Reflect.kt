@@ -278,7 +278,7 @@ fun <T : Any> Constructor<T>.new(vararg args: Any?): T {
 
 fun <T : Any> Constructor<T>.call(obj: T, vararg args: Any?): T {
     setAccessible()
-    XposedKit.impl!!.invokeSpecial(this, obj, *args)
+    XposedKit.impl.invokeSpecial(this, obj, *args)
     return obj
 }
 
@@ -288,12 +288,12 @@ fun <T> Method.call(obj: Any?, vararg args: Any?): T {
 
 fun <T> Method.callOriginal(obj: Any?, vararg args: Any?): T {
     setAccessible()
-    return XposedKit.impl!!.invokeOriginal(this, obj, *args) as T
+    return XposedKit.impl.invokeOriginal(this, obj, *args) as T
 }
 
 fun <T> Method.callSpecial(obj: Any, vararg args: Any?): T {
     setAccessible()
-    return XposedKit.impl!!.invokeSpecial(this, obj, *args) as T
+    return XposedKit.impl.invokeSpecial(this, obj, *args) as T
 }
 
 fun <T> Field.get(obj: Any?): T {

@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 object XposedKit {
     const val TAG = "XposedKit"
 
-    internal var impl: XposedInterface? = null
+    internal lateinit var impl: XposedInterface
     private val attachedApplications = WeakHashMap<String, Application>()
     private val appAttachListeners = ConcurrentHashMap<String, MutableSet<(Application) -> Unit>>()
 
@@ -43,7 +43,7 @@ object XposedKit {
     }
 
     internal fun prepare() {
-        impl!!.hook(
+        impl.hook(
             Application::class.reflect.method("attach")!!,
             HookType.AFTER,
             InvokeCallback.PRIORITY_HIGHEST
@@ -65,25 +65,25 @@ object XposedKit {
     }
 
     val available
-        get() = impl != null
+        get() = ::impl.isInitialized
 
     val apiVersion
-        get() = impl!!.apiVer
+        get() = impl.apiVer
 
     val frameworkName
-        get() = impl!!.frameworkLabel
+        get() = impl.frameworkLabel
 
     val frameworkVersion
-        get() = impl!!.frameworkVer
+        get() = impl.frameworkVer
 
     val frameworkVersionCode
-        get() = impl!!.frameworkVerCode
+        get() = impl.frameworkVerCode
 
     val moduleSource
-        get() = impl!!.moduleSource
+        get() = impl.moduleSource
 
     val moduleAppInfo
-        get() = impl!!.moduleAppInfo
+        get() = impl.moduleAppInfo
 
     val moduleActivities
         get() = modulePackageInfo.activities.map { it.info }
@@ -148,7 +148,7 @@ object XposedKit {
     val remotePreferences by lazy {
         object : RemotePreferencesProvider {
             override fun get(name: String): SharedPreferences {
-                return impl?.getRemotePrefs(name) ?: throw IllegalStateException("XposedInterface is not initialized!")
+                return impl.getRemotePrefs(name)
             }
         }
     }
@@ -156,11 +156,11 @@ object XposedKit {
     val remoteFile by lazy {
         object : RemoteFileProvider {
             override fun get(name: String): ParcelFileDescriptor {
-                return impl?.getRemoteFile(name) ?: throw IllegalStateException("XposedInterface is not initialized!")
+                return impl.getRemoteFile(name)
             }
 
             override fun files(): List<String> {
-                return impl?.getRemoteFiles().orEmpty()
+                return impl.getRemoteFiles()
             }
         }
     }

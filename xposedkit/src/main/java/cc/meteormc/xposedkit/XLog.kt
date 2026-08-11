@@ -33,6 +33,6 @@ object XLog {
     }
 
     private fun print(priority: Int, tag: String, msg: String, tr: Throwable?) {
-        XposedKit.impl?.printLog(priority, tag, msg, tr)
+        XposedKit.impl.printLog(priority, tag, msg, tr)
     }
 }

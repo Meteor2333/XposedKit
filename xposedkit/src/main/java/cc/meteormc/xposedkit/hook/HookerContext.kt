@@ -24,7 +24,7 @@ open class HookerContext(
     }
 
     fun Member.hook(type: HookType, priority: Int = InvokeCallback.PRIORITY_NORMAL, callback: InvokeCallback): Member {
-        val handle = XposedKit.impl!!.hook(this, type, priority, callback)
+        val handle = XposedKit.impl.hook(this, type, priority, callback)
         handles.getOrPut(this) { mutableListOf() } += handle
         return this
     }
