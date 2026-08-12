@@ -254,19 +254,18 @@ Java_cc_meteormc_xposedkit_nativelib_NativeBridge_VisitHeapObjects(JNIEnv *env, 
 extern "C"
 JNIEXPORT jboolean JNICALL
 Java_cc_meteormc_xposedkit_nativelib_NativeBridge_SetEntryPointsToInterpreter(JNIEnv *env, jclass thiz,
-                                                                              jobject method,
-                                                                              jlong art_method_ptr) {
+                                                                              jobject method) {
     if (!method) {
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "method is null");
         return JNI_FALSE;
     }
 
-    xposedkit::art::ArtMethod* art_method;
-    if (art_method_ptr < 0) {
-        art_method = reinterpret_cast<xposedkit::art::ArtMethod*>(env->FromReflectedMethod(method));
-    } else {
-        art_method = reinterpret_cast<xposedkit::art::ArtMethod*>(art_method_ptr);
+    if (!env->IsInstanceOf(method, xposedkit::Class_Executable)) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "method is not an instance of Executable");
+        return JNI_FALSE;
     }
 
+    auto method_ptr = env->GetLongField(method, xposedkit::Field_Executable_artMethod);
+    auto art_method = reinterpret_cast<xposedkit::art::ArtMethod*>(method_ptr);
     return xposedkit::art::ClassLinker::SetEntryPointsToInterpreter(art_method);
 }

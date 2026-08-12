@@ -2,9 +2,40 @@ module;
 
 #include "jni.h"
 
+#include <string>
+
 export module xposedkit:jni_helper;
 
 namespace xposedkit {
+
+namespace {
+    template<typename... Names>
+    requires (std::convertible_to<Names, const char*> && ...)
+    jclass FindClass(JNIEnv* env, Names&&... names) {
+        jclass result = nullptr;
+
+        auto try_find = [&](const char* name) {
+            if (result) return;
+
+            result = env->FindClass(name);
+            if (env->ExceptionCheck()) {
+                env->ExceptionClear();
+                result = nullptr;
+            }
+        };
+
+        (try_find(std::forward<Names>(names)), ...);
+
+        if (!result) {
+            env->ThrowNew(
+                    env->FindClass("java/lang/ClassNotFoundException"),
+                    "None of the candidate classes were found");
+            return nullptr;
+        }
+
+        return (jclass) env->NewGlobalRef(result);
+    }
+}
 
 jclass Class_Boolean;
 jclass Class_Byte;
@@ -44,21 +75,23 @@ jmethodID Method_Executable_declaringClass;
 jmethodID Method_Executable_paramTypes;
 jmethodID Method_Method_returnType;
 
-void InstallJniHelper(JNIEnv* env) {
-    Class_Boolean                        = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Boolean"));
-    Class_Byte                           = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Byte"));
-    Class_Char                           = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Character"));
-    Class_Short                          = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Short"));
-    Class_Int                            = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Integer"));
-    Class_Long                           = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Long"));
-    Class_Float                          = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Float"));
-    Class_Double                         = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Double"));
-    Class_Void                           = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Void"));
+jfieldID Field_Executable_artMethod;
 
-    Class_Class                          = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Class"));
-    Class_Executable                     = (jclass) env->NewGlobalRef(env->FindClass("java/lang/reflect/Executable"));
-    Class_Method                         = (jclass) env->NewGlobalRef(env->FindClass("java/lang/reflect/Method"));
-    Class_Throwable                      = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Throwable"));
+void InstallJniHelper(JNIEnv* env) {
+    Class_Boolean                        = FindClass(env, "java/lang/Boolean");
+    Class_Byte                           = FindClass(env, "java/lang/Byte");
+    Class_Char                           = FindClass(env, "java/lang/Character");
+    Class_Short                          = FindClass(env, "java/lang/Short");
+    Class_Int                            = FindClass(env, "java/lang/Integer");
+    Class_Long                           = FindClass(env, "java/lang/Long");
+    Class_Float                          = FindClass(env, "java/lang/Float");
+    Class_Double                         = FindClass(env, "java/lang/Double");
+    Class_Void                           = FindClass(env, "java/lang/Void");
+
+    Class_Class                          = FindClass(env, "java/lang/Class");
+    Class_Executable                     = FindClass(env, "java/lang/reflect/Executable", "java/lang/reflect/AbstractMethod");
+    Class_Method                         = FindClass(env, "java/lang/reflect/Method");
+    Class_Throwable                      = FindClass(env, "java/lang/Throwable");
 
     Method_Boolean_boxing                = env->GetStaticMethodID(Class_Boolean, "valueOf", "(Z)Ljava/lang/Boolean;");
     Method_Byte_boxing                   = env->GetStaticMethodID(Class_Byte, "valueOf", "(B)Ljava/lang/Byte;");
@@ -82,6 +115,8 @@ void InstallJniHelper(JNIEnv* env) {
     Method_Executable_declaringClass     = env->GetMethodID(Class_Executable, "getDeclaringClass", "()Ljava/lang/Class;");
     Method_Executable_paramTypes         = env->GetMethodID(Class_Executable, "getParameterTypes", "()[Ljava/lang/Class;");
     Method_Method_returnType             = env->GetMethodID(Class_Method, "getReturnType", "()Ljava/lang/Class;");
+
+    Field_Executable_artMethod           = env->GetFieldID(Class_Executable, "artMethod", "J");
 }
 
 void ReloadJniHelper(JNIEnv* env) {

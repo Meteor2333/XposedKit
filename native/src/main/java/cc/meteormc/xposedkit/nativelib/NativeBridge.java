@@ -23,7 +23,7 @@ public class NativeBridge {
 
     public static native Object CallNonvirtualMethod(Executable method, Object instance, Object... args);
 
-    public static native <T> T[] VisitHeapObjects(Class<T> clazz);
+    public static native boolean SetEntryPointsToInterpreter(Executable method);
 
-    public static native boolean SetEntryPointsToInterpreter(Executable method, long artMethod);
+    public static native <T> T[] VisitHeapObjects(Class<T> clazz);
 }

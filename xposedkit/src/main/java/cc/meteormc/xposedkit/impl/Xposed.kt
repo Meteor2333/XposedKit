@@ -2,7 +2,6 @@ package cc.meteormc.xposedkit.impl
 
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
-import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import cc.meteormc.xposedkit.XLog
@@ -26,7 +25,6 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import java.io.FileNotFoundException
 import java.lang.reflect.Constructor
-import java.lang.reflect.Executable
 import java.lang.reflect.Member
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
@@ -112,13 +110,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
                 runCatching { invoke(null, member) }.isSuccess
             }?.takeIf { it }
         } ?: run {
-            val artMethod = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Executable::class.reflect {
-                    if (!type.isInstance(member)) return@reflect null
-                    field("artMethod")?.get(member) as? Long
-                }
-            } else null
-            NativeBridge.SetEntryPointsToInterpreter(member, artMethod ?: -1)
+            NativeBridge.SetEntryPointsToInterpreter(member)
         }
     }
 
