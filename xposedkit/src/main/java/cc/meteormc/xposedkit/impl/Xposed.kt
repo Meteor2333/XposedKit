@@ -153,8 +153,35 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         type: HookType,
         callback: InvokeCallback
     ): HookHandle {
-        // TODO: 尝试支持hookClassInitializer
-        throw UnsupportedOperationException("Xposed API does not support class initializer hook!")
+        val clinit = NativeBridge.FindClassInitializer(clazz)
+        val fakeMember = object : Member {
+            override fun getDeclaringClass() = clazz
+
+            override fun getModifiers() = 0x0
+
+            override fun getName() = "<clinit>"
+
+            override fun isSynthetic() = false
+        }
+        val unhook = XposedBridge.hookMethod(clinit, object : XC_MethodHook() {
+            private val info = InvokeInfo(fakeMember, null, emptyArray(), null, null)
+
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                if (type != HookType.BEFORE) return
+                callback(info)
+            }
+
+            override fun afterHookedMethod(param: MethodHookParam) {
+                if (type != HookType.AFTER) return
+                callback(info)
+            }
+        })
+        return HookHandle(
+            fakeMember,
+            type,
+            InvokeCallback.PRIORITY_NORMAL,
+            callback
+        ) { unhook.unhook() }
     }
 
     override fun invokeOriginal(member: Member, obj: Any?, vararg args: Any?): Any? {

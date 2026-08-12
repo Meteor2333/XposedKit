@@ -11,7 +11,10 @@ export module xposedkit;
 
 import :art_method;
 import :class_linker;
+import :clazz;
+import :object;
 import :runtime;
+import :thread;
 
 import :java_primitive;
 import :jni_helper;
@@ -174,6 +177,25 @@ Java_cc_meteormc_xposedkit_nativelib_NativeBridge_CallNonvirtualMethod(JNIEnv *e
 
     env->CallNonvirtualVoidMethodA(instance, clazz, target, cargs.data());
     return nullptr;
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_cc_meteormc_xposedkit_nativelib_NativeBridge_FindClassInitializer(JNIEnv *env, jclass thiz,
+                                                                       jclass clazz) {
+    if (!clazz) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "clazz is null");
+        return nullptr;
+    }
+
+    auto self = xposedkit::art::Thread::Current();
+    auto mirror = (xposedkit::art::mirror::Class*) self->DecodeJObject(clazz);
+    auto method = mirror->FindClassInitializer();
+    if (!method) {
+        return nullptr;
+    }
+
+    return env->ToReflectedMethod(clazz, reinterpret_cast<jmethodID>(method), true);
 }
 
 extern "C"
