@@ -320,7 +320,8 @@ class LSPosed : XposedInterface, LSPModule() {
             onProcessLoaded(param)
         }
 
-        XLog.v(TAG, "Loading new hooks for ${packages.size} packages")
+        if (packages.isNotEmpty())
+            XLog.v(TAG, "Loading new hooks for ${packages.size} packages")
         packages.forEach {
             val packageName = it.key
             val wrapper = it.value
