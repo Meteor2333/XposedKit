@@ -2,6 +2,7 @@ package cc.meteormc.xposedkit.impl
 
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import cc.meteormc.xposedkit.XLog
@@ -16,6 +17,7 @@ import cc.meteormc.xposedkit.nativelib.NativeBridge
 import cc.meteormc.xposedkit.param.PackageLoadedParam
 import cc.meteormc.xposedkit.param.ProcessLoadedParam
 import cc.meteormc.xposedkit.param.SystemServerStartingParam
+import cc.meteormc.xposedkit.reflect
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
@@ -24,8 +26,10 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import java.io.FileNotFoundException
 import java.lang.reflect.Constructor
+import java.lang.reflect.Executable
 import java.lang.reflect.Member
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.util.concurrent.CopyOnWriteArrayList
 
 class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
@@ -93,8 +97,29 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun deoptimize(member: Member): Boolean {
-        // TODO: 尝试支持deoptimize
-        return false
+        if (Modifier.isNative(member.modifiers)) {
+            XLog.w(TAG, "Deoptimizing native method is not supported: $member")
+            return false
+        }
+
+        if (member !is Constructor<*> && member !is Method) {
+            throw IllegalArgumentException("Member must be a Constructor or Method!")
+        }
+
+        return XposedBridge::class.reflect {
+            // 先尝试反射LSPosed框架额外提供的方法
+            method("deoptimizeMethod")?.run {
+                runCatching { invoke(null, member) }.isSuccess
+            }?.takeIf { it }
+        } ?: run {
+            val artMethod = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Executable::class.reflect {
+                    if (!type.isInstance(member)) return@reflect null
+                    field("artMethod")?.get(member) as? Long
+                }
+            } else null
+            NativeBridge.SetEntryPointsToInterpreter(member, artMethod ?: -1)
+        }
     }
 
     override fun hook(

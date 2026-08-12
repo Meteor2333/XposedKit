@@ -9,6 +9,8 @@ module;
 
 export module xposedkit;
 
+import :art_method;
+import :class_linker;
 import :runtime;
 
 import :java_primitive;
@@ -46,6 +48,8 @@ JNI_OnUnload(JavaVM *vm, void *reserved) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_cc_meteormc_xposedkit_nativelib_NativeBridge_Init(JNIEnv *env, jclass clazz) {
+    xposedkit::art::ArtMethod::Init(env);
+
     auto runtime = xposedkit::art::Runtime::Current();
     if (!runtime->EnsurePluginLoaded("libopenjdkjvmti.so", nullptr)) {
         // TODO: 支持Android7及以下无jvmti的设备
@@ -130,7 +134,7 @@ Java_cc_meteormc_xposedkit_nativelib_NativeBridge_CallNonvirtualMethod(JNIEnv *e
         jvalue* result = &local;
         auto returnType = xposedkit::GetPrimitiveType(
                 env,
-                (jclass) env->CallObjectMethod((jobject) method, xposedkit::Method_Method_returnType));
+                (jclass) env->CallObjectMethod(method, xposedkit::Method_Method_returnType));
         switch (returnType) {
             case xposedkit::PrimitiveType::Object:
                 return env->CallNonvirtualObjectMethodA(instance, clazz, target, cargs.data());
@@ -245,4 +249,24 @@ Java_cc_meteormc_xposedkit_nativelib_NativeBridge_VisitHeapObjects(JNIEnv *env, 
 
     gJvmti->Deallocate(reinterpret_cast<unsigned char*>(objects));
     return result;
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_cc_meteormc_xposedkit_nativelib_NativeBridge_SetEntryPointsToInterpreter(JNIEnv *env, jclass thiz,
+                                                                              jobject method,
+                                                                              jlong art_method_ptr) {
+    if (!method) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "method is null");
+        return JNI_FALSE;
+    }
+
+    xposedkit::art::ArtMethod* art_method;
+    if (art_method_ptr < 0) {
+        art_method = reinterpret_cast<xposedkit::art::ArtMethod*>(env->FromReflectedMethod(method));
+    } else {
+        art_method = reinterpret_cast<xposedkit::art::ArtMethod*>(art_method_ptr);
+    }
+
+    return xposedkit::art::ClassLinker::SetEntryPointsToInterpreter(art_method);
 }

@@ -16,8 +16,10 @@ jclass Class_Float;
 jclass Class_Double;
 jclass Class_Void;
 
+jclass Class_Class;
 jclass Class_Executable;
 jclass Class_Method;
+jclass Class_Throwable;
 
 jmethodID Method_Boolean_boxing;
 jmethodID Method_Byte_boxing;
@@ -37,6 +39,7 @@ jmethodID Method_Long_unboxing;
 jmethodID Method_Float_unboxing;
 jmethodID Method_Double_unboxing;
 
+jmethodID Method_Class_declaredConstructors;
 jmethodID Method_Executable_declaringClass;
 jmethodID Method_Executable_paramTypes;
 jmethodID Method_Method_returnType;
@@ -52,8 +55,10 @@ void InstallJniHelper(JNIEnv* env) {
     Class_Double                         = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Double"));
     Class_Void                           = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Void"));
 
+    Class_Class                          = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Class"));
     Class_Executable                     = (jclass) env->NewGlobalRef(env->FindClass("java/lang/reflect/Executable"));
     Class_Method                         = (jclass) env->NewGlobalRef(env->FindClass("java/lang/reflect/Method"));
+    Class_Throwable                      = (jclass) env->NewGlobalRef(env->FindClass("java/lang/Throwable"));
 
     Method_Boolean_boxing                = env->GetStaticMethodID(Class_Boolean, "valueOf", "(Z)Ljava/lang/Boolean;");
     Method_Byte_boxing                   = env->GetStaticMethodID(Class_Byte, "valueOf", "(B)Ljava/lang/Byte;");
@@ -73,6 +78,7 @@ void InstallJniHelper(JNIEnv* env) {
     Method_Float_unboxing                = env->GetMethodID(Class_Float, "floatValue", "()F");
     Method_Double_unboxing               = env->GetMethodID(Class_Double, "doubleValue", "()D");
 
+    Method_Class_declaredConstructors    = env->GetMethodID(Class_Class, "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;");
     Method_Executable_declaringClass     = env->GetMethodID(Class_Executable, "getDeclaringClass", "()Ljava/lang/Class;");
     Method_Executable_paramTypes         = env->GetMethodID(Class_Executable, "getParameterTypes", "()[Ljava/lang/Class;");
     Method_Method_returnType             = env->GetMethodID(Class_Method, "getReturnType", "()Ljava/lang/Class;");
@@ -93,8 +99,10 @@ void UninstallJniHelper(JNIEnv* env) {
     env->DeleteGlobalRef(Class_Double);
     env->DeleteGlobalRef(Class_Void);
 
+    env->DeleteGlobalRef(Class_Class);
     env->DeleteGlobalRef(Class_Executable);
     env->DeleteGlobalRef(Class_Method);
+    env->DeleteGlobalRef(Class_Throwable);
 }
 
 }
