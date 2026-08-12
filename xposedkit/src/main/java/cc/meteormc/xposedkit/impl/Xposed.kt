@@ -138,9 +138,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
             handles.removeIf { it.callback == callback }
              if (handles.isEmpty()) {
                  hookedMembers.remove(member)
-                 // 由于Xposed内部的unhook也只是移除列表中的回调
-                 // 也并没有真正的取消hook 所以这个操作暂时看上去没什么意义
-                 // target.unhook.unhook()
+                  target.unhook.unhook()
              }
         }
 
