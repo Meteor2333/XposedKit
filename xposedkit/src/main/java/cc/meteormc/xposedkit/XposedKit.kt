@@ -10,7 +10,6 @@ import android.content.res.Resources
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.DisplayMetrics
-import android.util.Log
 import cc.meteormc.xposedkit.hook.HookType
 import cc.meteormc.xposedkit.hook.InvokeCallback
 import cc.meteormc.xposedkit.nativelib.NativeBridge
@@ -24,12 +23,15 @@ object XposedKit {
     const val TAG = "XposedKit"
 
     internal lateinit var impl: XposedInterface
-    private val attachedApplications = WeakHashMap<String, Application>()
+    internal val attachedApplications = WeakHashMap<String, Application>()
     private val appAttachListeners = ConcurrentHashMap<String, MutableSet<(Application) -> Unit>>()
 
-    internal fun init(impl: XposedInterface) {
+    internal fun init(impl: XposedInterface, isNativeInitialized: Boolean = false) {
         this.impl = impl
-        if (NativeBridge.isLoaded) {
+        XLog.d(TAG, "Initializing XposedKit with implementation: ${impl::class.java.name}, isNativeInitialized=$isNativeInitialized")
+        if (isNativeInitialized) {
+            NativeBridge.Reload()
+        } else if (NativeBridge.isLoaded) {
             NativeBridge.Init()
         } else {
             XLog.w(
@@ -101,9 +103,12 @@ object XposedKit {
         get() = modulePackageInfo.packageName
 
     internal val modulePackageInfo by lazy {
-        val source = File(moduleSource)
+        val source = File(moduleSource).parentFile
         try {
-            PackageParser().parsePackage(source, 0)!!
+            PackageParser().parsePackage(source, 0).apply {
+                applicationInfo.sourceDir = moduleSource
+                applicationInfo.publicSourceDir = applicationInfo.sourceDir
+            }
         } catch (e: PackageParser.PackageParserException) {
             throw IllegalStateException("Failed to parse module package!", e)
         }
@@ -126,23 +131,28 @@ object XposedKit {
         var result: XposedModule? = null
         for (service in services) {
             if (result != null) {
-                Log.w(TAG, "Multiple XposedModule implementations found, ignoring $service")
+                XLog.w(TAG, "Multiple XposedModule implementations found, ignoring $service")
                 continue
             }
 
             val reflect = classLoader.typedReflect<XposedModule>(service)
             if (reflect == null) {
-                Log.w(TAG, "XposedModule implementation $service not found, skipping it")
+                XLog.w(TAG, "XposedModule implementation $service not found, skipping it")
                 continue
             }
 
             result = reflect.singleton ?: reflect.constructor()?.new()
             if (result == null) {
-                Log.w(TAG, "XposedModule implementation $service does not have a no-arg constructor, skipping it")
+                XLog.w(TAG, "XposedModule implementation $service does not have a no-arg constructor, skipping it")
             }
         }
 
-        result ?: throw IllegalStateException("No valid XposedModule implementation found!")
+        if (result != null) {
+            XLog.d(TAG, "Found XposedModule implementation: ${result::class.java.name}")
+            return@lazy result
+        }
+
+        throw IllegalStateException("No valid XposedModule implementation found!")
     }
 
     val remotePreferences by lazy {

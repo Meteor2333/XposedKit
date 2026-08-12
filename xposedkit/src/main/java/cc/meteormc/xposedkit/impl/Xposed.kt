@@ -7,6 +7,7 @@ import android.util.Log
 import cc.meteormc.xposedkit.XLog
 import cc.meteormc.xposedkit.XposedInterface
 import cc.meteormc.xposedkit.XposedKit
+import cc.meteormc.xposedkit.XposedKit.TAG
 import cc.meteormc.xposedkit.hook.HookHandle
 import cc.meteormc.xposedkit.hook.HookType
 import cc.meteormc.xposedkit.hook.InvokeCallback
@@ -142,7 +143,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
                 result = member.invoke(obj, *args)
             }
 
-            XLog.w(XposedKit.TAG, builder.toString())
+            XLog.w(TAG, builder.toString())
             return result
         }
 
@@ -201,15 +202,20 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun initZygote(param: IXposedHookZygoteInit.StartupParam) {
+        XLog.v(TAG, "Zygote initialized: modulePath=${param.modulePath}")
         moduleSource = param.modulePath
     }
 
     override fun handleLoadPackage(param: XC_LoadPackage.LoadPackageParam) {
+        XLog.v(TAG, "Package loaded: processName=${param.processName}, packageName=${param.packageName}, isFirstApplication=${param.isFirstApplication}")
+
         if (param.packageName == XposedKit.modulePackageName) {
+            XLog.d(TAG, "Skipping module package: ${param.packageName}")
             return
         }
 
         if (param.processName == "android") {
+            XLog.v(TAG, "The process is system_server, calling onSystemServerStarting only")
             val processParam = ProcessLoadedParam(param.processName, true)
             val systemParam = SystemServerStartingParam(param.classLoader)
             XposedKit.mount {
@@ -220,6 +226,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
         if (param.isFirstApplication) {
+            XLog.v(TAG, "The process is first application, means its a newly started process, calling onProcessLoaded")
             XposedKit.prepare()
             val processParam = ProcessLoadedParam(param.processName, false)
             XposedKit.mount { onProcessLoaded(processParam) }

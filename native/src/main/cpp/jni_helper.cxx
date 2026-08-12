@@ -78,6 +78,10 @@ void InstallJniHelper(JNIEnv* env) {
     Method_Method_returnType             = env->GetMethodID(Class_Method, "getReturnType", "()Ljava/lang/Class;");
 }
 
+void ReloadJniHelper(JNIEnv* env) {
+
+}
+
 void UninstallJniHelper(JNIEnv* env) {
     env->DeleteGlobalRef(Class_Boolean);
     env->DeleteGlobalRef(Class_Byte);
