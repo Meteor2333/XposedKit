@@ -35,7 +35,6 @@ internal interface XposedInterface {
     fun hookClassInitializer(
         clazz: Class<*>,
         type: HookType,
-        priority: Int,
         callback: InvokeCallback
     ): HookHandle
 

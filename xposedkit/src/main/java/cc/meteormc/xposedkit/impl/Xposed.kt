@@ -153,7 +153,6 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
     override fun hookClassInitializer(
         clazz: Class<*>,
         type: HookType,
-        priority: Int,
         callback: InvokeCallback
     ): HookHandle {
         // TODO: 尝试支持hookClassInitializer

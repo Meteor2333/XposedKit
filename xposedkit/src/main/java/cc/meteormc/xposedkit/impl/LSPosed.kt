@@ -95,7 +95,10 @@ class LSPosed : XposedInterface, LSPModule() {
             throw IllegalArgumentException("Member must be an Executable in LSPosed framework")
         }
 
-        val identifier = buildIdentifier(type, priority)
+        val identifier = HookIdentifier(
+            type,
+            if (priority == InvokeCallback.PRIORITY_NORMAL) PRIORITY_DEFAULT else priority
+        )
         val hooker = LSPInterface.Hooker {
             val returnValue: Any?
             val member: Member = it.executable
@@ -183,13 +186,10 @@ class LSPosed : XposedInterface, LSPModule() {
     override fun hookClassInitializer(
         clazz: Class<*>,
         type: HookType,
-        priority: Int,
         callback: InvokeCallback
     ): HookHandle {
-        val identifier = buildIdentifier(type, priority)
         val handle = hookClassInitializer(clazz)
             .setExceptionMode(LSPInterface.ExceptionMode.PASSTHROUGH)
-            .setPriority(identifier.priority)
             // TODO: 支持热重载
 //            .run { if (apiVersion >= 102) setId(identifier.toId()) else this }
             .intercept {
@@ -220,7 +220,7 @@ class LSPosed : XposedInterface, LSPModule() {
         return HookHandle(
             handle.executable,
             type,
-            priority,
+            InvokeCallback.PRIORITY_NORMAL,
             callback
         ) {
             handle.unhook()
@@ -437,16 +437,6 @@ class LSPosed : XposedInterface, LSPModule() {
                 throw IllegalArgumentException("Member must be an Executable in LSPosed framework")
             }
         }
-    }
-
-    private fun buildIdentifier(
-        type: HookType,
-        priority: Int
-    ): HookIdentifier {
-        return HookIdentifier(
-            type,
-            if (priority == InvokeCallback.PRIORITY_NORMAL) PRIORITY_DEFAULT else priority
-        )
     }
 
     private data class HookIdentifier(
