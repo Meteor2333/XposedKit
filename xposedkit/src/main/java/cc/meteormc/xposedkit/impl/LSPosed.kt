@@ -288,7 +288,6 @@ class LSPosed : XposedInterface, LSPModule() {
     @Suppress("UNCHECKED_CAST")
     override fun onHotReloaded(param: LSPLifecycle.HotReloadedParam) {
         XposedKit.init(this, true)
-        XposedKit.prepare()
         XLog.v(TAG, "Hot reloaded: extras=${param.extras}, processName=${param.processName}, isSystemServer=${param.isSystemServer}")
 
         val oldHookHandles = param.oldHookHandles
@@ -307,6 +306,8 @@ class LSPosed : XposedInterface, LSPModule() {
         isHotReloading.set(true)
         previousHookHandles.clear()
         previousHookHandles.putAll(oldHookHandles.groupBy { it.executable }.mapValues { it.value.toMutableList() })
+
+        XposedKit.prepare()
         XposedKit.mount {
             val param = ProcessLoadedParam(
                 param.processName,
@@ -362,7 +363,13 @@ class LSPosed : XposedInterface, LSPModule() {
         isHotReloading.set(false)
         previousHookHandles.values.flatten().apply {
             XLog.v(TAG, "Replaced ${oldHookSize - size} old hook handles")
-            XLog.v(TAG, "Cleaning up $size old hook handles that were not replaced during hot reload")
+            if (isEmpty()) {
+                XLog.v(TAG, "All old hook handles have been replaced")
+                return
+            }
+
+            XLog.v(TAG, "$size old hook handles remain that were not replaced:\n" +
+                    joinToString("", limit = 5, truncated = "\t... ${size - 5} more") { "\t- ${it.executable}<${it.id}>\n" })
         }.forEach {
             // 清除剩余的没有被替换的旧Hook
             it.unhook()
