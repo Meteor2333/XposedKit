@@ -48,4 +48,16 @@ open class HookerContext(
     fun <T : Iterable<Member>> T.hookAfter(callback: InvokeCallback): List<HookHandle> {
         return hook(HookType.AFTER, callback)
     }
+
+    fun Class<*>.hookClinit(type: HookType, priority: Int = InvokeCallback.PRIORITY_NORMAL, callback: InvokeCallback): HookHandle {
+        return XposedKit.impl.hookClassInitializer(this, type, priority, callback)
+    }
+
+    fun Class<*>.hookClinitBefore(priority: Int = InvokeCallback.PRIORITY_NORMAL, callback: InvokeCallback): HookHandle {
+        return hookClinit(HookType.BEFORE, priority, callback)
+    }
+
+    fun Class<*>.hookClinitAfter(priority: Int = InvokeCallback.PRIORITY_NORMAL, callback: InvokeCallback): HookHandle {
+        return hookClinit(HookType.AFTER, priority, callback)
+    }
 }

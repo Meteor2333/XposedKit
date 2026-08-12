@@ -32,6 +32,7 @@ import io.github.libxposed.api.XposedInterface as LSPInterface
 import io.github.libxposed.api.XposedModule as LSPModule
 import io.github.libxposed.api.XposedModuleInterface as LSPLifecycle
 
+@RequiresApi(Build.VERSION_CODES.O)
 class LSPosed : XposedInterface, LSPModule() {
     override val apiVer: Int
         get() = apiVersion
@@ -41,6 +42,8 @@ class LSPosed : XposedInterface, LSPModule() {
         get() = frameworkVersion
     override val frameworkVerCode: Long
         get() = frameworkVersionCode
+    override val frameworkProp: Long
+        get() = frameworkProperties
     override val moduleSource: String
         get() = moduleAppInfo.sourceDir
     override val moduleAppInfo: ApplicationInfo
@@ -74,7 +77,14 @@ class LSPosed : XposedInterface, LSPModule() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    override fun deoptimize(member: Member): Boolean {
+        if (member !is Executable) {
+            throw IllegalArgumentException("Member must be an Executable in LSPosed framework")
+        }
+
+        return deoptimize(member)
+    }
+
     override fun hook(
         member: Member,
         type: HookType,
@@ -85,6 +95,7 @@ class LSPosed : XposedInterface, LSPModule() {
             throw IllegalArgumentException("Member must be an Executable in LSPosed framework")
         }
 
+        val identifier = buildIdentifier(type, priority)
         val hooker = LSPInterface.Hooker {
             val returnValue: Any?
             val member: Member = it.executable
@@ -128,10 +139,6 @@ class LSPosed : XposedInterface, LSPModule() {
             returnValue
         }
 
-        val identifier = HookIdentifier(
-            type,
-            if (priority == InvokeCallback.PRIORITY_NORMAL) PRIORITY_DEFAULT else priority
-        )
         fun LSPInterface.HookHandle.buildHandle(): HookHandle {
             return HookHandle(
                 member,
@@ -165,15 +172,59 @@ class LSPosed : XposedInterface, LSPModule() {
             }
         }
 
-        var builder = hook(member)
+        return hook(member)
             .setExceptionMode(LSPInterface.ExceptionMode.PASSTHROUGH)
             .setPriority(identifier.priority)
+            .run { if (apiVersion >= 102) setId(identifier.toId()) else this }
+            .intercept(hooker)
+            .buildHandle()
+    }
 
-        if (apiVersion >= 102) {
-            builder = builder.setId(identifier.toId())
+    override fun hookClassInitializer(
+        clazz: Class<*>,
+        type: HookType,
+        priority: Int,
+        callback: InvokeCallback
+    ): HookHandle {
+        val identifier = buildIdentifier(type, priority)
+        val handle = hookClassInitializer(clazz)
+            .setExceptionMode(LSPInterface.ExceptionMode.PASSTHROUGH)
+            .setPriority(identifier.priority)
+            // TODO: 支持热重载
+//            .run { if (apiVersion >= 102) setId(identifier.toId()) else this }
+            .intercept {
+                val member: Member = it.executable
+                when (type) {
+                    HookType.BEFORE -> {
+                        val info = InvokeInfo(member, null, emptyArray(), null, null)
+                        callback(info)
+                        if (info.thrown != null) {
+                            throw info.thrown
+                        }
+
+                        it.proceed()
+                    }
+                    HookType.AFTER -> {
+                        val result = it.runCatching { proceed() }
+                        val info = InvokeInfo(member, null, emptyArray(), null, result.exceptionOrNull())
+                        callback(info)
+                        if (info.thrown != null) {
+                            throw info.thrown
+                        }
+                    }
+                }
+
+                null
+            }
+
+        return HookHandle(
+            handle.executable,
+            type,
+            priority,
+            callback
+        ) {
+            handle.unhook()
         }
-
-        return builder.intercept(hooker).buildHandle()
     }
 
     override fun invokeOriginal(member: Member, obj: Any?, vararg args: Any?): Any? {
@@ -386,6 +437,16 @@ class LSPosed : XposedInterface, LSPModule() {
                 throw IllegalArgumentException("Member must be an Executable in LSPosed framework")
             }
         }
+    }
+
+    private fun buildIdentifier(
+        type: HookType,
+        priority: Int
+    ): HookIdentifier {
+        return HookIdentifier(
+            type,
+            if (priority == InvokeCallback.PRIORITY_NORMAL) PRIORITY_DEFAULT else priority
+        )
     }
 
     private data class HookIdentifier(

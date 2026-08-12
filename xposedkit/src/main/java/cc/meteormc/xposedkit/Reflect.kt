@@ -272,6 +272,10 @@ fun <T : Any> Class<T>.findInstances(): List<T> {
     return NativeBridge.VisitHeapObjects(this).toList()
 }
 
+fun Constructor<*>.deoptimize(): Boolean {
+    return XposedKit.impl.deoptimize(this)
+}
+
 fun <T : Any> Constructor<T>.new(vararg args: Any?): T {
     return this.setAccessible().newInstance(*args)
 }
@@ -280,6 +284,15 @@ fun <T : Any> Constructor<T>.call(obj: T, vararg args: Any?): T {
     setAccessible()
     XposedKit.impl.invokeSpecial(this, obj, *args)
     return obj
+}
+
+fun <T : Any> Constructor<T>.callOriginal(obj: Any?, vararg args: Any?): T {
+    setAccessible()
+    return XposedKit.impl.invokeOriginal(this, obj, *args) as T
+}
+
+fun Method.deoptimize(): Boolean {
+    return XposedKit.impl.deoptimize(this)
 }
 
 fun <T> Method.call(obj: Any?, vararg args: Any?): T {

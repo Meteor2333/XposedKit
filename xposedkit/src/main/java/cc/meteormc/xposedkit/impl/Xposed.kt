@@ -45,6 +45,8 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         get() = "Unknown"
     override val frameworkVerCode: Long
         get() = -1L
+    override val frameworkProp: Long
+        get() = 0x00
     override var moduleSource: String = ""
         get() = field.ifBlank { throw IllegalStateException("Module source is not set!") }
     override val moduleAppInfo: ApplicationInfo
@@ -90,6 +92,11 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
     }
 
+    override fun deoptimize(member: Member): Boolean {
+        // TODO: 尝试支持deoptimize
+        return false
+    }
+
     override fun hook(
         member: Member,
         type: HookType,
@@ -124,6 +131,16 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         val insertIndex = handles.indexOfFirst { it.priority < priority }.takeIf { it >= 0 } ?: handles.size
         handles.add(insertIndex, handle)
         return handle
+    }
+
+    override fun hookClassInitializer(
+        clazz: Class<*>,
+        type: HookType,
+        priority: Int,
+        callback: InvokeCallback
+    ): HookHandle {
+        // TODO: 尝试支持hookClassInitializer
+        throw UnsupportedOperationException("Xposed API does not support class initializer hook!")
     }
 
     override fun invokeOriginal(member: Member, obj: Any?, vararg args: Any?): Any? {

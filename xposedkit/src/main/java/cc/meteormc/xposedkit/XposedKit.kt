@@ -20,7 +20,11 @@ import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 
 object XposedKit {
-    const val TAG = "XposedKit"
+    internal const val TAG = "XposedKit"
+
+    const val PROP_CAP_SYSTEM = 1L
+    const val PROP_CAP_REMOTE = 1L shl 1
+    const val PROP_API_PROTECTION = 1L shl 2
 
     internal lateinit var impl: XposedInterface
     internal val attachedApplications = WeakHashMap<String, Application>()
@@ -80,6 +84,9 @@ object XposedKit {
 
     val frameworkVersionCode
         get() = impl.frameworkVerCode
+
+    val frameworkProperties
+        get() = impl.frameworkProp
 
     val moduleSource
         get() = impl.moduleSource

@@ -17,12 +17,23 @@ internal interface XposedInterface {
 
     val frameworkVerCode: Long
 
+    val frameworkProp: Long
+
     val moduleSource: String
 
     val moduleAppInfo: ApplicationInfo
 
+    fun deoptimize(member: Member): Boolean
+
     fun hook(
         member: Member,
+        type: HookType,
+        priority: Int,
+        callback: InvokeCallback
+    ): HookHandle
+
+    fun hookClassInitializer(
+        clazz: Class<*>,
         type: HookType,
         priority: Int,
         callback: InvokeCallback
