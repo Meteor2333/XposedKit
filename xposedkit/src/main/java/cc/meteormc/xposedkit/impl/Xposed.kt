@@ -64,10 +64,12 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     private val hookedMembers = HashMap<Member, HookedMember>()
     private val xcallback = object : XC_MethodHook() {
+        @Keep
         override fun beforeHookedMethod(param: MethodHookParam) {
             runCallback(HookType.BEFORE, param)
         }
 
+        @Keep
         override fun afterHookedMethod(param: MethodHookParam) {
             runCallback(HookType.AFTER, param)
         }
