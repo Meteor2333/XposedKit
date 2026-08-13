@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import androidx.annotation.Keep
 import cc.meteormc.xposedkit.XLog
 import cc.meteormc.xposedkit.XposedInterface
 import cc.meteormc.xposedkit.XposedKit
@@ -51,6 +52,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         get() = 0x00
     override var moduleSource: String = ""
         get() = field.ifBlank { throw IllegalStateException("Module source is not set!") }
+        private set
     override val moduleAppInfo: ApplicationInfo
         get() = XposedKit.modulePackageInfo.applicationInfo
 
@@ -264,6 +266,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         moduleSource = param.modulePath
     }
 
+    @Keep
     override fun handleLoadPackage(param: XC_LoadPackage.LoadPackageParam) {
         XLog.v(TAG, "Package loaded: processName=${param.processName}, packageName=${param.packageName}, isFirstApplication=${param.isFirstApplication}")
 

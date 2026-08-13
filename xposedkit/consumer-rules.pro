@@ -1,17 +1,13 @@
-# R8对这种文件的支持不好 很多时候并不能成功替换 所以暂时只能keep这个类
-# -adaptresourcefilecontents assets/xposed_init
--keep,allowshrinking,allowoptimization class cc.meteormc.xposedkit.impl.Xposed
--adaptresourcefilecontents META-INF/xposed/java_init.list
-
--keep,allowoptimization,allowobfuscation class cc.meteormc.xposedkit.** { *; }
--keep,allowoptimization,allowobfuscation class * extends cc.meteormc.xposedkit.XposedModule
+-keepnames class cc.meteormc.xposedkit.impl.**
+-keep,allowoptimization,allowobfuscation class cc.meteormc.xposedkit.impl.** { *; }
+-keep,allowoptimization,allowobfuscation class * extends cc.meteormc.xposedkit.XposedModule { *; }
 
 -dontwarn android.app.AndroidAppHelper
 -dontwarn android.content.res.XModuleResources
 -dontwarn android.content.res.XResForwarder
 -dontwarn android.content.res.XResources
 -dontwarn de.robv.android.xposed.**
--dontwarn io.github.libxposed.**
+-dontwarn io.github.libxposed.api.**
 
 -dontwarn android.app.ActivityThread
 -dontwarn android.app.ActivityThread$ApplicationThread

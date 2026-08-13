@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import androidx.annotation.Keep
 import androidx.annotation.RequiresApi
 import cc.meteormc.xposedkit.XLog
 import cc.meteormc.xposedkit.XposedInterface
@@ -262,6 +263,7 @@ class LSPosed : XposedInterface, LSPModule() {
         }
     }
 
+    @Keep
     override fun onModuleLoaded(param: LSPLifecycle.ModuleLoadedParam) {
         XposedKit.init(this)
         XposedKit.prepare()
@@ -271,6 +273,7 @@ class LSPosed : XposedInterface, LSPModule() {
         XposedKit.mount { onProcessLoaded(processParam) }
     }
 
+    @Keep
     override fun onPackageReady(param: LSPLifecycle.PackageReadyParam) {
         XLog.v(TAG, "Package ready: packageName=${param.packageName}, isFirstPackage=${param.isFirstPackage}")
         val packageParam = PackageLoadedParam(
@@ -289,6 +292,7 @@ class LSPosed : XposedInterface, LSPModule() {
         )
     }
 
+    @Keep
     override fun onSystemServerStarting(param: LSPLifecycle.SystemServerStartingParam) {
         XLog.v(TAG, "System server starting")
         val systemParam = SystemServerStartingParam(param.classLoader)
@@ -296,6 +300,7 @@ class LSPosed : XposedInterface, LSPModule() {
         systemServerClassLoader = param.classLoader
     }
 
+    @Keep
     override fun onHotReloading(param: LSPLifecycle.HotReloadingParam): Boolean {
         XLog.v(TAG, "Hot reloading: extras=${param.extras}")
         val reloadParam = HotReloadingParam(
@@ -336,6 +341,7 @@ class LSPosed : XposedInterface, LSPModule() {
         return true
     }
 
+    @Keep
     @Suppress("UNCHECKED_CAST")
     override fun onHotReloaded(param: LSPLifecycle.HotReloadedParam) {
         XposedKit.init(this, true)
