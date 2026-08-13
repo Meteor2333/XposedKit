@@ -148,11 +148,18 @@ class LSPosed : XposedInterface, LSPModule() {
         type: HookType,
         callback: InvokeCallback
     ): HookHandle {
-        val handle = hookClassInitializer(clazz)
+        val hooker = InterceptHooker(type, callback, true)
+        val handle = if (isHotReloading.get()) {
+            previousHookHandles.entries
+                .firstOrNull { (key, _) -> key.name == "<clinit>" && key.declaringClass == clazz }
+                ?.value
+                ?.removeLastOrNull()
+                ?.replaceHook(hooker)
+        } else {
+            null
+        } ?: hookClassInitializer(clazz)
             .setExceptionMode(LSPInterface.ExceptionMode.PASSTHROUGH)
-            // TODO: 支持热重载
-//            .run { if (apiVersion >= 102) setId(identifier.toId()) else this }
-            .intercept(InterceptHooker(type, callback, true))
+            .intercept(hooker)
 
         return HookHandle(
             handle.executable,
