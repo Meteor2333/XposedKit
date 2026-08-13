@@ -22,3 +22,4 @@ hidden-api-bypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapiby
 symbol-processing-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 xposed-api = { group = "de.robv.android.xposed", name = "api", version.ref = "xposed" }
 lsposed-api = { group = "io.github.libxposed", name = "api", version.ref = "lsposed" }
+lsposed-service = { group = "io.github.libxposed", name = "service", version.ref = "lsposed" }
