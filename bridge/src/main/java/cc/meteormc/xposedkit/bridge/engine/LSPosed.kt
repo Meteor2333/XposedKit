@@ -11,9 +11,9 @@ import cc.meteormc.xposedkit.bridge.XposedKitBridge
 import io.github.libxposed.service.HookedTarget
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
-import io.github.libxposed.service.HotReloadResult as LSPHotReloadResult
 import java.util.EnumMap
 import java.util.concurrent.atomic.AtomicReference
+import io.github.libxposed.service.HotReloadResult as LSPHotReloadResult
 
 internal object LSPosed : BaseEngine(), XposedServiceHelper.OnServiceListener {
     private val service = AtomicReference<XposedService>()
@@ -37,7 +37,7 @@ internal object LSPosed : BaseEngine(), XposedServiceHelper.OnServiceListener {
         }
     override val scopes: Collection<String>
         get() = useService { scope }
-    override val hookedProcess: Collection<HookedProcess>
+    override val hookedProcesses: Collection<HookedProcess>
         get() = useService {
             processMapping = runningTargets.associateBy { it.toProcess() }
             processMapping.keys

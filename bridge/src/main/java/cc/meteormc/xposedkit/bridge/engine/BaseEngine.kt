@@ -62,7 +62,7 @@ internal abstract class BaseEngine {
     open val scopes: Collection<String>
         get() = emptyList()
 
-    open val hookedProcess: Collection<HookedProcess>
+    open val hookedProcesses: Collection<HookedProcess>
         get() = emptyList()
 
     abstract fun init()

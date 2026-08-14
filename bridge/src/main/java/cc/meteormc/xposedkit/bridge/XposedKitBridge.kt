@@ -40,8 +40,8 @@ object XposedKitBridge {
     val scopes
         get() = ScopeList(engine, engine.scopes.toMutableList())
 
-    val hookedProcess
-        get() = engine.hookedProcess
+    val hookedProcesses
+        get() = engine.hookedProcesses
 
     fun init() {
         ENGINE_LIST.forEach { it.init() }
