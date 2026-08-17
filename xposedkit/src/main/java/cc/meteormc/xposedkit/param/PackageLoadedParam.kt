@@ -4,6 +4,7 @@ import android.app.AppComponentFactory
 import android.content.pm.ApplicationInfo
 
 data class PackageLoadedParam(
+    val processName: String,
     val packageName: String,
     val classLoader: ClassLoader,
     val appInfo: ApplicationInfo,

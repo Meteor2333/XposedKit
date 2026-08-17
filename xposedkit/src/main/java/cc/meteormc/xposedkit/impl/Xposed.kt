@@ -296,6 +296,7 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
         val packageParam = PackageLoadedParam(
+            param.processName,
             param.packageName,
             param.classLoader,
             param.appInfo,

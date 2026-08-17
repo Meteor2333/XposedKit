@@ -50,6 +50,7 @@ class LSPosed : XposedInterface, LSPModule() {
     override val moduleAppInfo: ApplicationInfo
         get() = moduleApplicationInfo
 
+    private lateinit var processName: String
     private var isHotReloading = AtomicBoolean(false)
     private var previousHookHandles = ConcurrentHashMap<Member, MutableList<LSPInterface.HookHandle>>()
     private var systemServerClassLoader by WeakDelegate<ClassLoader>()
@@ -212,7 +213,8 @@ class LSPosed : XposedInterface, LSPModule() {
         XposedKit.prepare()
         XLog.v(TAG, "Module loaded: processName=${param.processName}, isSystemServer=${param.isSystemServer}")
 
-        val processParam = ProcessLoadedParam(param.processName, param.isSystemServer)
+        processName = param.processName
+        val processParam = ProcessLoadedParam(processName, param.isSystemServer)
         XposedKit.mount { onProcessLoaded(processParam) }
     }
 
@@ -220,6 +222,7 @@ class LSPosed : XposedInterface, LSPModule() {
     override fun onPackageReady(param: LSPLifecycle.PackageReadyParam) {
         XLog.v(TAG, "Package ready: packageName=${param.packageName}, isFirstPackage=${param.isFirstPackage}")
         val packageParam = PackageLoadedParam(
+            processName,
             param.packageName,
             param.classLoader,
             param.applicationInfo,
@@ -290,6 +293,7 @@ class LSPosed : XposedInterface, LSPModule() {
         XposedKit.init(this, true)
         XLog.v(TAG, "Hot reloaded: extras=${param.extras}, processName=${param.processName}, isSystemServer=${param.isSystemServer}")
 
+        processName = param.processName
         val oldHookHandles = param.oldHookHandles
         val state = param.savedInstanceState as Map<String, Any?>
         val savedData = state["savedData"]
@@ -310,7 +314,7 @@ class LSPosed : XposedInterface, LSPModule() {
         XposedKit.prepare()
         XposedKit.mount {
             val param = ProcessLoadedParam(
-                param.processName,
+                processName,
                 param.isSystemServer,
                 ProcessLoadedParam.HotReloadInfo(
                     param.extras,
@@ -342,6 +346,7 @@ class LSPosed : XposedInterface, LSPModule() {
 
             XposedKit.mount {
                 val param = PackageLoadedParam(
+                    processName,
                     packageName,
                     classLoader,
                     appInfo,
