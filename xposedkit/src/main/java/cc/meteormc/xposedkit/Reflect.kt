@@ -177,7 +177,7 @@ class Reflect<T : Any>(val type: Class<T>) {
 
     fun fields(type: Class<*>) = findRecursive {
         it.declaredFields.filter { field ->
-            type.isAssignableFrom(field.type)
+            field.type == type
         }
     }.flatten().setAccessible()
 
