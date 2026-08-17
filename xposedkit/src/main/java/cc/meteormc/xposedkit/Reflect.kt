@@ -135,7 +135,7 @@ class Reflect<T : Any>(val type: Class<T>) {
             ?.singleOrNull()
     }
 
-    fun method(vararg paramTypes: Class<*>) = methodCache.getOrPut(getParametersString(*paramTypes) + "(*)") {
+    fun method(vararg paramTypes: Class<*>?) = methodCache.getOrPut(getParametersString(*paramTypes) + "(*)") {
         methods(*paramTypes).singleOrNull()
     }
 
@@ -150,13 +150,13 @@ class Reflect<T : Any>(val type: Class<T>) {
         }.flatten().setAccessible()
     }
 
-    fun methods(vararg paramTypes: Class<*>): List<Method> {
+    fun methods(vararg paramTypes: Class<*>?): List<Method> {
         val exists = mutableSetOf<String>()
         return findRecursive {
             it.declaredMethods.filter { method ->
                 // 仅保留继承链中最先匹配到的类的方法（优先子类）
                 // 忽略父类被覆盖的方法
-                paramTypes.contentEquals(method.parameterTypes) && exists.add(method.signature())
+                paramTypes.contentEqualsWithoutNull(method.parameterTypes) && exists.add(method.signature())
             }
         }.flatten().setAccessible()
     }
@@ -187,8 +187,15 @@ class Reflect<T : Any>(val type: Class<T>) {
     val declaredFields
         get() = type.declaredFields.setAccessible()
 
-    private fun getParametersString(vararg clazzes: Class<*>): String {
-        return "(${clazzes.joinToString(",") { it.name }})"
+    private fun getParametersString(vararg clazzes: Class<*>?): String {
+        return "(${clazzes.joinToString(",") { it?.name ?: "null" }})"
+    }
+
+    private infix fun <T> Array<out T>.contentEqualsWithoutNull(other: Array<out T>): Boolean {
+        if (size != other.size) return false
+        return indices.all { i ->
+            this[i] == null || this[i] == other[i]
+        }
     }
 
     private inline fun <R> firstRecursive(func: (clazz: Class<*>) -> R?): R? {
