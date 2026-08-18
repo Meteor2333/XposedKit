@@ -24,7 +24,6 @@ import cc.meteormc.xposedkit.call
 import cc.meteormc.xposedkit.get
 import cc.meteormc.xposedkit.reflect
 
-@Suppress("DEPRECATION")
 @ExperimentalStdlibApi
 open class ModuleContextWrapper(
     base: Context,
@@ -135,11 +134,13 @@ open class ModuleContextWrapper(
     }
 
     override fun startActivity(intent: Intent, options: Bundle?) {
+        XLog.d(TAG, "startActivity: ${intent.component}")
         val targetActivityInfo = XposedKit.moduleActivities.firstOrNull {
             intent.component == ComponentName(it.packageName, it.name)
         }
 
         if (targetActivityInfo == null) {
+            XLog.d(TAG, "startActivity: target activity not found, fallback to default implementation")
             super.startActivity(intent, options)
             return
         }
@@ -166,7 +167,10 @@ open class ModuleContextWrapper(
                 // 过滤launchMode与targetInfo不一致的Activity
                 if (it.launchMode != targetActivityInfo.launchMode) return@filter false
                 return@filter true
-            }.ifEmpty { null }
+            }.ifEmpty { null }?.apply {
+                XLog.d(TAG, "Found $size valid activities for ${targetActivityInfo.name}:\n" +
+                        joinToString(separator = "\n", limit = 4, truncated = "\nand more...") { it.name })
+            }
         }
 
         val pm = baseContext.packageManager
@@ -205,10 +209,12 @@ open class ModuleContextWrapper(
         newIntent.putExtra("intent_wrapper", intent)
         newIntent.putExtra("target_activity_info", targetActivityInfo)
         newIntent.setComponent(mProxyActivity)
+        XLog.d(TAG, "startActivity: proxy activity is ${mProxyActivity}, real activity is ${intent.component}")
 
         val activityThread = mThread!!
         var instrumentation = activityThread.instrumentation
         if (instrumentation !is InstrumentationWrapper) {
+            @Suppress("DEPRECATION")
             instrumentation = object : InstrumentationWrapper(instrumentation) {
                 override fun callActivityOnCreate(activity: Activity?, icicle: Bundle?) {
                     prepareActivity(activity, icicle)
@@ -278,6 +284,7 @@ open class ModuleContextWrapper(
 
                     val intent = activity.intent
                     if (!this.isProxyActivity(intent)) return
+                    XLog.d(TAG, "prepareActivity: preparing activity ${activity.javaClass.name} for module context")
 
                     val moduleContext = this@ModuleContextWrapper
                     icicle?.classLoader = moduleContext.classLoader
@@ -304,6 +311,7 @@ open class ModuleContextWrapper(
                 }
 
                 private fun tryNewModuleActivity(intent: Intent?): Activity? {
+                    XLog.d(TAG, "tryNewModuleActivity: current component is ${intent?.component}")
                     if (intent == null) return null
                     if (!this.isProxyActivity(intent)) return null
 
@@ -311,6 +319,7 @@ open class ModuleContextWrapper(
                     val realClassLoader = realContext.classLoader
                     val realIntent = this.getRealIntent(intent) ?: return null
                     val realComponent = realIntent.component ?: return null
+                    XLog.d(TAG, "tryNewModuleActivity: real component is ${realComponent.className}")
 
                     var exception: Throwable? = null
                     val className = runCatching {
@@ -327,12 +336,14 @@ open class ModuleContextWrapper(
                     }
 
                     return try {
+                        XLog.d(TAG, "tryNewModuleActivity: trying use ${realClassLoader.javaClass} to create $className activity")
                         super.newActivity(
                             realClassLoader,
                             className,
                             realIntent
                         )
                     } catch (e: ClassNotFoundException) {
+                        XLog.w(TAG, "Failed to find Activity '$className' from module '${realContext.packageName}'", e)
                         if (exception != null) {
                             exception.addSuppressed(e)
                             XLog.e(
@@ -363,10 +374,14 @@ open class ModuleContextWrapper(
             }
 
             ActivityThread::class.reflect {
-                field("mInstrumentation")?.set(activityThread, instrumentation)
+                field("mInstrumentation")?.apply {
+                    set(activityThread, instrumentation)
+                    XLog.d(TAG, "startActivity: instrumentation replaced ${this[activityThread].javaClass}")
+                }
             }
         }
 
+        XLog.d(TAG, "startActivity: calling execStartActivity with new intent ${newIntent.component}")
         Instrumentation::class.reflect {
             method(
                 "execStartActivity",
