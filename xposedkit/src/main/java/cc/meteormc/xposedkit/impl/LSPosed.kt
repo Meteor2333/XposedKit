@@ -412,8 +412,8 @@ class LSPosed : XposedInterface, LSPModule() {
                         null
                     )
                     callback(info)
-                    if (info.thrown != null) {
-                        throw info.thrown
+                    if (info.exception != null) {
+                        throw info.exception
                     } else if (!ignoreResult && info.hasChanged) {
                         info.result
                     } else {
@@ -430,8 +430,8 @@ class LSPosed : XposedInterface, LSPModule() {
                         result.exceptionOrNull()
                     )
                     callback(info)
-                    if (info.thrown != null) {
-                        throw info.thrown
+                    if (info.exception != null) {
+                        throw info.exception
                     }
 
                     if (ignoreResult) result.getOrNull()

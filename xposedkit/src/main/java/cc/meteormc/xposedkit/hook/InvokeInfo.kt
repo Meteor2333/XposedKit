@@ -1,6 +1,12 @@
 package cc.meteormc.xposedkit.hook
 
+import cc.meteormc.xposedkit.call
+import cc.meteormc.xposedkit.callOriginal
+import cc.meteormc.xposedkit.callSpecial
+import cc.meteormc.xposedkit.reflect
+import java.lang.reflect.Constructor
 import java.lang.reflect.Member
+import java.lang.reflect.Method
 
 @Suppress("UNCHECKED_CAST")
 class InvokeInfo(
@@ -8,7 +14,7 @@ class InvokeInfo(
     val instance: Any?,
     val args: Array<Any?>,
     result: Any?,
-    val thrown: Throwable?
+    val exception: Throwable?
 ) {
     internal var hasChanged = false
     var result = result
@@ -69,13 +75,59 @@ class InvokeInfo(
         get() = this.result as String
     fun <T> result() = this.result as T
 
-    fun <T : Throwable> thrown() = this.thrown as T
+    fun <T : Throwable> exception() = this.exception as T
+
+    fun doNothing() {
+        result = null
+    }
+
+    fun <T> callSuper(): T {
+        return callSuper(*args)
+    }
+
+    fun <T> callSuper(vararg args: Any?): T {
+        val superclass = member.declaringClass.superclass?.reflect
+            ?: throw IllegalArgumentException("The declaring class of the member has no superclass")
+        return when (member) {
+            is Constructor<*> -> {
+                val ctor = superclass.constructor(*member.parameterTypes)
+                    ?: throw IllegalArgumentException("No matching constructor found in superclass")
+                ctor.call(instance(), *args)
+            }
+            is Method -> {
+                val method = superclass.method(member.name, *member.parameterTypes)
+                    ?: throw IllegalArgumentException("No matching method found in superclass")
+                method.callSpecial(instance(), *args)
+            }
+            else -> {
+                throw IllegalArgumentException("Unsupported member type: ${member::class.java.name}")
+            }
+        }
+    }
+
+    fun <T> callOriginal(): T {
+        return callOriginal(*args)
+    }
+
+    fun <T> callOriginal(vararg args: Any?): T {
+        return when (member) {
+            is Constructor<*> -> {
+                member.callOriginal(instance, *args) as T
+            }
+            is Method -> {
+                member.callOriginal(instance, *args)
+            }
+            else -> {
+                throw IllegalArgumentException("Unsupported member type: ${member::class.java.name}")
+            }
+        }
+    }
 
     override fun equals(other: Any?) = other is InvokeInfo && this.member == other.member
 
     override fun hashCode() = this.member.hashCode()
 
     override fun toString(): String {
-        return "InvokeInfo(member=$member, instance=$instance, args=${args.contentToString()}, result=$result, thrown=$thrown, hasChanged=$hasChanged)"
+        return "InvokeInfo(member=$member, instance=$instance, args=${args.contentToString()}, result=$result, exception=$exception, hasChanged=$hasChanged)"
     }
 }
