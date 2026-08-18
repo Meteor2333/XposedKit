@@ -187,7 +187,7 @@ object XposedKit {
         config: Configuration? = null,
         copyFrom: AssetManager? = null
     ): Resources {
-        val am = AssetManager::class.reflect { constructor()!!.new() }
+        val am = AssetManager::class.reflect { constructor()!!.new<AssetManager>() }
         @Suppress("DEPRECATION")
         val resources = Resources(am, metrics, config)
         addAssetPathToResources(resources, moduleSource)

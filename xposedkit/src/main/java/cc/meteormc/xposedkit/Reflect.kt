@@ -283,17 +283,17 @@ fun Constructor<*>.deoptimize(): Boolean {
     return XposedKit.impl.deoptimize(this)
 }
 
-fun <T : Any> Constructor<T>.new(vararg args: Any?): T {
-    return this.setAccessible().newInstance(*args)
+fun <T : Any> Constructor<*>.new(vararg args: Any?): T {
+    return this.setAccessible().newInstance(*args) as T
 }
 
-fun <T : Any> Constructor<T>.call(obj: T, vararg args: Any?): T {
+fun <T : Any> Constructor<*>.call(obj: T, vararg args: Any?): T {
     setAccessible()
     XposedKit.impl.invokeSpecial(this, obj, *args)
     return obj
 }
 
-fun <T : Any> Constructor<T>.callOriginal(obj: Any?, vararg args: Any?): T {
+fun <T : Any> Constructor<*>.callOriginal(obj: Any?, vararg args: Any?): T {
     setAccessible()
     return XposedKit.impl.invokeOriginal(this, obj, *args) as T
 }
