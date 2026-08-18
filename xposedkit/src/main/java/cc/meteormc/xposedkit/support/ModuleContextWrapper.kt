@@ -27,7 +27,11 @@ import cc.meteormc.xposedkit.reflect
 @ExperimentalStdlibApi
 open class ModuleContextWrapper(
     base: Context,
-    val mResources: Resources,
+    val mResources: Resources = XposedKit.createModuleResources(
+        base.resources.displayMetrics,
+        base.resources.configuration,
+        base.resources.assets
+    ),
     val mThemeId: Int = XposedKit.moduleAppInfo.theme
 ) : ContextWrapper(base) {
     companion object {
@@ -91,11 +95,8 @@ open class ModuleContextWrapper(
 
     }
 
-    /*override*/ fun getThemeResId(): Int {
-        return mThemeId
-    }
-
     override fun getTheme(): Resources.Theme {
+        if (mThemeId <= 0) return super.theme
         mTheme.applyStyle(mThemeId, true)
         return mTheme
     }
@@ -107,11 +108,6 @@ open class ModuleContextWrapper(
     override fun getPackageName(): String {
         return XposedKit.modulePackageName
     }
-
-    // 替换ApplicationInfo可能有问题 (已知比如startActivity后无法返回)
-//    override fun getApplicationInfo(): ApplicationInfo {
-//        return XposedKit.moduleAppInfo
-//    }
 
     override fun getPackageResourcePath(): String? {
         return XposedKit.moduleSource
@@ -295,10 +291,10 @@ open class ModuleContextWrapper(
                         field("mResources")?.set(activity, mResources)
                     }
 
-                    val targetActivityInfo = this.getTargetActivityInfo(intent)
-                    var targetTheme = targetActivityInfo?.theme ?: 0
-                    if (targetTheme == 0 || targetTheme == moduleContext.mThemeId) {
-                        targetTheme = moduleContext.mThemeId
+                    if (moduleContext.mThemeId > 0) {
+                        // 继承创建ModuleContextWrapper时设置的主题
+                        val themeId = moduleContext.mThemeId
+                        activity.setTheme(themeId)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             activity.theme = moduleContext.theme
                         } else {
@@ -306,8 +302,14 @@ open class ModuleContextWrapper(
                                 field("mTheme")?.set(activity, moduleContext.theme)
                             }
                         }
+                    } else {
+                        val targetActivityInfo = this.getTargetActivityInfo(intent)
+                        val themeId = targetActivityInfo?.theme ?: 0
+                        // 跟随模块的目标Activity设置的主题 否则就使用宿主的主题
+                        if (themeId != 0) {
+                            activity.setTheme(themeId)
+                        }
                     }
-                    activity.setTheme(targetTheme)
                 }
 
                 private fun tryNewModuleActivity(intent: Intent?): Activity? {
