@@ -412,4 +412,8 @@ open class ModuleContextWrapper(
     override fun startActivities(intents: Array<Intent>, options: Bundle?) {
         throw UnsupportedOperationException("startActivities is not supported in ModuleContextWrapper")
     }
+
+    fun setProxyActivity(component: ComponentName) {
+        mProxyActivity = component
+    }
 }
