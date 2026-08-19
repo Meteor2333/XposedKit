@@ -11,7 +11,6 @@ import java.lang.reflect.Member
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.WeakHashMap
-import kotlin.jvm.Throws
 import kotlin.reflect.KClass
 
 private val cache = WeakHashMap<Class<*>, Reflect<*>>()
@@ -262,7 +261,6 @@ fun Member.signature(): String {
     return "$name(${parameterTypes.joinToString(",") { it.name }})"
 }
 
-@Throws(IllegalStateException::class)
 fun <T : Any> Class<T>.allocate(): T {
     if (!NativeBridge.isLoaded) {
         throw IllegalStateException("NativeBridge is not available!")

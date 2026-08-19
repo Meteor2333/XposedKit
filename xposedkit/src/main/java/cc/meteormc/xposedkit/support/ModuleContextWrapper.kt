@@ -57,13 +57,7 @@ open class ModuleContextWrapper(
 
     init {
         findContextImpl(base)?.let {
-            this.mImpl = it.apply {
-                // 可能会适得其反 在某些情况下反而导致找不到资源
-                // XposedKit.addAssetPathToResources(
-                //     it.resources,
-                //     XposedKit.moduleSource
-                // )
-            }
+            this.mImpl = it
             this.mThread = sImplClass?.reflect {
                 field("mMainThread")?.get(it) as? ActivityThread?
             }
