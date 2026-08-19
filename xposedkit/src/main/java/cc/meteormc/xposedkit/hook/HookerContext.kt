@@ -10,16 +10,16 @@ open class HookerContext(
     open val classLoader: ClassLoader,
     protected val handles: MutableMap<Member, MutableList<HookHandle>> = mutableMapOf()
 ) {
-    val String.clazz: Class<*>?
+    inline val String.clazz: Class<*>?
         get() = reflect?.type
-    val String.reflect: Reflect<*>?
+    inline val String.reflect: Reflect<*>?
         get() = classLoader.reflect(this)
 
-    fun <R> String.reflect(block: Reflect<*>.() -> R): R? {
+    inline fun <R> String.reflect(block: Reflect<*>.() -> R): R? {
         return classLoader.reflect(this, block)
     }
 
-    fun <T : Any, R> String.typedReflect(block: Reflect<T>.() -> R): R? {
+    inline fun <T : Any, R> String.typedReflect(block: Reflect<T>.() -> R): R? {
         return classLoader.typedReflect(this, block)
     }
 

@@ -18,14 +18,14 @@ private val cache = WeakHashMap<Class<*>, Reflect<*>>()
 val <T : Any> Class<T>.reflect: Reflect<T>
     get() = cache.getOrPut(this) { Reflect(this) } as Reflect<T>
 
-fun <T : Any, R> Class<T>.reflect(block: Reflect<T>.() -> R): R {
+inline fun <T : Any, R> Class<T>.reflect(block: Reflect<T>.() -> R): R {
     return reflect.run(block)
 }
 
 val <T : Any> KClass<T>.reflect: Reflect<T>
     get() = this.java.reflect
 
-fun <T : Any, R> KClass<T>.reflect(block: Reflect<T>.() -> R): R {
+inline fun <T : Any, R> KClass<T>.reflect(block: Reflect<T>.() -> R): R {
     return this.java.reflect(block)
 }
 
@@ -71,7 +71,7 @@ fun ClassLoader.reflect(className: String): Reflect<*>? {
     }.getOrNull()
 }
 
-fun <R> ClassLoader.reflect(className: String, block: Reflect<*>.() -> R): R? {
+inline fun <R> ClassLoader.reflect(className: String, block: Reflect<*>.() -> R): R? {
     return reflect(className)?.run(block)
 }
 
@@ -79,7 +79,7 @@ fun <T : Any> ClassLoader.typedReflect(className: String): Reflect<T>? {
     return reflect(className) as? Reflect<T>
 }
 
-fun <T : Any, R> ClassLoader.typedReflect(className: String, block: Reflect<T>.() -> R): R? {
+inline fun <T : Any, R> ClassLoader.typedReflect(className: String, block: Reflect<T>.() -> R): R? {
     return typedReflect<T>(className)?.run(block)
 }
 
