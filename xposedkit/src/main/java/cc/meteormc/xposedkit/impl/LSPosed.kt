@@ -16,6 +16,7 @@ import cc.meteormc.xposedkit.hook.HookType
 import cc.meteormc.xposedkit.hook.InvokeCallback
 import cc.meteormc.xposedkit.hook.InvokeInfo
 import cc.meteormc.xposedkit.impl.LSPosed.HookIdentifier.Companion.toId
+import cc.meteormc.xposedkit.nativelib.NativeBridge
 import cc.meteormc.xposedkit.param.HotReloadingParam
 import cc.meteormc.xposedkit.param.PackageLoadedParam
 import cc.meteormc.xposedkit.param.ProcessLoadedParam
@@ -285,13 +286,14 @@ class LSPosed : XposedInterface, LSPModule() {
 
         // 在此处完成清理操作
         appPackages.clear()
+        NativeBridge.Cleanup()
         return true
     }
 
     @Keep
     @Suppress("UNCHECKED_CAST")
     override fun onHotReloaded(param: LSPLifecycle.HotReloadedParam) {
-        XposedKit.init(this, true)
+        XposedKit.init(this)
         XLog.v(TAG, "Hot reloaded: extras=${param.extras}, processName=${param.processName}, isSystemServer=${param.isSystemServer}")
 
         processName = param.processName

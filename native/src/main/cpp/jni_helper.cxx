@@ -119,10 +119,6 @@ void InstallJniHelper(JNIEnv* env) {
     Field_Executable_artMethod           = env->GetFieldID(Class_Executable, "artMethod", "J");
 }
 
-void ReloadJniHelper(JNIEnv* env) {
-
-}
-
 void UninstallJniHelper(JNIEnv* env) {
     env->DeleteGlobalRef(Class_Boolean);
     env->DeleteGlobalRef(Class_Byte);

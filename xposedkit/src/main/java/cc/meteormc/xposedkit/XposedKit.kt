@@ -30,12 +30,10 @@ object XposedKit {
     internal val attachedApplications = WeakHashMap<String, Application>()
     private val appAttachListeners = ConcurrentHashMap<String, MutableSet<(Application) -> Unit>>()
 
-    internal fun init(impl: XposedInterface, isNativeInitialized: Boolean = false) {
+    internal fun init(impl: XposedInterface) {
         this.impl = impl
-        XLog.d(TAG, "Initializing XposedKit with implementation: ${impl::class.java.name}, isNativeInitialized=$isNativeInitialized")
-        if (isNativeInitialized) {
-            NativeBridge.Reload()
-        } else if (NativeBridge.isLoaded) {
+        XLog.d(TAG, "Initializing XposedKit with implementation: ${impl::class.java.name}")
+        if (NativeBridge.isLoaded) {
             NativeBridge.Init()
         } else {
             XLog.w(

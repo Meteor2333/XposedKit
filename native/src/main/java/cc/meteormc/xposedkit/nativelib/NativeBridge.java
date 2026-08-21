@@ -18,7 +18,7 @@ public class NativeBridge {
 
     public static native void Init();
 
-    public static native void Reload();
+    public static native void Cleanup();
 
     public static native <T> T AllocObject(Class<T> clazz);
 
