@@ -250,6 +250,7 @@ class LSPosed : XposedInterface, LSPModule() {
     override fun onHotReloading(param: LSPLifecycle.HotReloadingParam): Boolean {
         XLog.v(TAG, "Hot reloading: extras=${param.extras}")
         val reloadParam = HotReloadingParam(
+            processName,
             param.extras,
             null
         )
