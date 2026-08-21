@@ -12,7 +12,7 @@ abstract class BaseHooker<T : HookerContext> {
 
     }
 
-    protected open fun T.unhook() {
+    protected open fun unhook() {
 
     }
 
@@ -25,9 +25,9 @@ abstract class BaseHooker<T : HookerContext> {
         hooked = true
     }
 
-    fun uninstallHook(context: T) {
+    fun uninstallHook() {
         try {
-            context.unhook()
+            unhook()
         } catch (e: Throwable) {
             XLog.e(tag, "Error occurred while uninstalling hook", e)
         }
