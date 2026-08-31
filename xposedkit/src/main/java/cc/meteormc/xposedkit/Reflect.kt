@@ -84,6 +84,7 @@ inline fun <T : Any, R> ClassLoader.typedReflect(className: String, block: Refle
 }
 
 class Reflect<T : Any>(val type: Class<T>) {
+    private val nestedClassCache = mutableMapOf<String, Class<*>?>()
     private val constructorCache = mutableMapOf<String, Constructor<*>?>()
     private val methodCache = mutableMapOf<String, Method?>()
     private val fieldCache = mutableMapOf<String, Field?>()
@@ -95,6 +96,20 @@ class Reflect<T : Any>(val type: Class<T>) {
             Modifier.isStatic(it.modifiers)
         }?.get<T>(null)
     }
+
+    fun nestedClass(name: String) = nestedClassCache.getOrPut(name) {
+        firstRecursive {
+            it.declaredClasses.firstOrNull { clazz ->
+                clazz.name == "${type.name}$$name"
+            }
+        }
+    }
+
+    val nestedClasses
+        get() = type.classes.toList()
+
+    val declaredNestedClasses
+        get() = type.declaredClasses.toList()
 
     fun constructor(vararg paramTypes: Class<*>) = constructorCache.getOrPut(getParametersString(*paramTypes)) {
         runCatching {
