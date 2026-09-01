@@ -1,6 +1,7 @@
 package cc.meteormc.xposedkit
 
 import android.util.Log
+import java.util.Collections
 
 object XLog {
     var level = Log.INFO
@@ -12,6 +13,17 @@ object XLog {
      * %message% - 日志内容
      */
     var pattern = "(%module_package%)[%tag%|%level_short%] %message%"
+    private val records = Collections.synchronizedList(mutableListOf<LogRecord>())
+
+    fun updateLevel(newLevel: Int) {
+        level = newLevel
+        records.asSequence().filter {
+            it.hidden && it.priority >= newLevel
+        }.forEach {
+            it.hidden = false
+            XposedKit.impl.printLog(it)
+        }
+    }
 
     fun v(tag: String, msg: String, tr: Throwable? = null) {
         print(Log.VERBOSE, tag, msg, tr)
@@ -34,7 +46,21 @@ object XLog {
     }
 
     private fun print(priority: Int, tag: String, msg: String, tr: Throwable?) {
-        if (priority < level) return
-        XposedKit.impl.printLog(priority, tag, msg, tr)
+        val record = LogRecord(priority, tag, msg, tr)
+        if (priority < level) {
+            record.hidden = true
+        } else {
+            XposedKit.impl.printLog(record)
+        }
+
+        records.add(record)
     }
+
+    data class LogRecord(
+        val priority: Int,
+        val tag: String,
+        val message: String,
+        val exception: Throwable?,
+        var hidden: Boolean = false
+    )
 }

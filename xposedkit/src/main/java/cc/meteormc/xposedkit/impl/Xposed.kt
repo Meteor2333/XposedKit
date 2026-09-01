@@ -231,13 +231,8 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
         return emptyList()
     }
 
-    override fun printLog(
-        priority: Int,
-        tag: String,
-        msg: String,
-        tr: Throwable?
-    ) {
-        val level = when (priority) {
+    override fun printLog(log: XLog.LogRecord) {
+        val level = when (log.priority) {
             Log.VERBOSE -> "VERBOSE"
             Log.DEBUG -> "DEBUG"
             Log.INFO -> "INFO"
@@ -250,14 +245,14 @@ class Xposed : XposedInterface, IXposedHookZygoteInit, IXposedHookLoadPackage {
             "level" to level,
             "level_short" to (level.firstOrNull() ?: "").toString(),
             "module_package" to XposedKit.modulePackageName,
-            "tag" to tag,
-            "message" to msg
+            "tag" to log.tag,
+            "message" to log.message
         )
         var formated = "%(\\w+)%".toRegex().replace(XLog.pattern) {
             values[it.groupValues[1]] ?: it.value
         }
-        if (tr != null) {
-            formated += "\n${Log.getStackTraceString(tr)}"
+        if (log.exception != null) {
+            formated += "\n${Log.getStackTraceString(log.exception)}"
         }
 
         XposedBridge.log(formated)

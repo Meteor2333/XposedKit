@@ -48,10 +48,5 @@ internal interface XposedInterface {
 
     fun getRemoteFiles(): List<String>
 
-    fun printLog(
-        priority: Int,
-        tag: String,
-        msg: String,
-        tr: Throwable?
-    )
+    fun printLog(log: XLog.LogRecord)
 }

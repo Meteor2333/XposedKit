@@ -196,15 +196,12 @@ class LSPosed : XposedInterface, LSPModule() {
     }
 
     override fun printLog(
-        priority: Int,
-        tag: String,
-        msg: String,
-        tr: Throwable?
+        log: XLog.LogRecord
     ) {
-        if (tr != null) {
-            log(priority, tag, msg, tr)
+        if (log.exception != null) {
+            log(log.priority, log.tag, log.message, log.exception)
         } else {
-            log(priority, tag, msg)
+            log(log.priority, log.tag, log.message)
         }
     }
 
