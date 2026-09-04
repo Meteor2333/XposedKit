@@ -21,6 +21,7 @@ import cc.meteormc.xposedkit.param.HotReloadingParam
 import cc.meteormc.xposedkit.param.PackageLoadedParam
 import cc.meteormc.xposedkit.param.ProcessLoadedParam
 import cc.meteormc.xposedkit.param.SystemServerStartingParam
+import cc.meteormc.xposedkit.util.AtomicBooleanDelegate
 import cc.meteormc.xposedkit.util.WeakDelegate
 import java.lang.ref.WeakReference
 import java.lang.reflect.Constructor
@@ -29,7 +30,6 @@ import java.lang.reflect.Member
 import java.lang.reflect.Method
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 import io.github.libxposed.api.XposedInterface as LSPInterface
 import io.github.libxposed.api.XposedModule as LSPModule
 import io.github.libxposed.api.XposedModuleInterface as LSPLifecycle
@@ -52,9 +52,9 @@ class LSPosed : XposedInterface, LSPModule() {
         get() = moduleApplicationInfo
 
     private lateinit var processName: String
-    private var isHotReloading = AtomicBoolean(false)
-    private var previousHookHandles = ConcurrentHashMap<Member, MutableList<LSPInterface.HookHandle>>()
+    private var isHotReloading by AtomicBooleanDelegate(false)
     private var systemServerClassLoader by WeakDelegate<ClassLoader>()
+    private var previousHookHandles = ConcurrentHashMap<Member, MutableList<LSPInterface.HookHandle>>()
     private val appPackages = mutableMapOf<String, RuntimePackage>()
 
     private data class RuntimePackage(
@@ -115,7 +115,7 @@ class LSPosed : XposedInterface, LSPModule() {
             if (priority == InvokeCallback.PRIORITY_NORMAL) PRIORITY_DEFAULT else priority
         )
 
-        if (isHotReloading.get()) {
+        if (isHotReloading) {
             // 当热重载时 如果存在与之前相同参数的HookHandle
             // 则可以认为它们是同一个钩子（哪怕实际上可能不是同一个）
             // 所以可以直接替换
@@ -151,7 +151,7 @@ class LSPosed : XposedInterface, LSPModule() {
         callback: InvokeCallback
     ): HookHandle {
         val hooker = InterceptHooker(type, callback, true)
-        val handle = if (isHotReloading.get()) {
+        val handle = if (isHotReloading) {
             previousHookHandles.entries
                 .firstOrNull { (key, _) -> key.name == "<clinit>" && key.declaringClass == clazz }
                 ?.value
@@ -307,7 +307,7 @@ class LSPosed : XposedInterface, LSPModule() {
         val oldHookSize = oldHookHandles.size
         XLog.v(TAG, "Found $oldHookSize old hook handles from previous module code")
 
-        isHotReloading.set(true)
+        isHotReloading = true
         previousHookHandles.clear()
         previousHookHandles.putAll(oldHookHandles.groupBy { it.executable }.mapValues { it.value.toMutableList() })
 
@@ -366,7 +366,7 @@ class LSPosed : XposedInterface, LSPModule() {
             }
         }
 
-        isHotReloading.set(false)
+        isHotReloading = false
         previousHookHandles.values.flatten().apply {
             XLog.v(TAG, "Replaced ${oldHookSize - size} old hook handles")
             if (isEmpty()) {
