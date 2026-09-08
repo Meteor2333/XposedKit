@@ -37,11 +37,29 @@ open class ModuleContextWrapper(
     companion object {
         private const val TAG = "ModuleContextWrapper"
 
+        val ContextWrapper.hostContext: Context?
+            get() {
+                if (this is ModuleContextWrapper) {
+                    return baseContext
+                }
+
+                return findContextImpl(this)
+            }
+
         private val sImplClass by lazy {
             Context::class.java
                 .classLoader!!
                 .reflect("android.app.ContextImpl")
                 ?.type
+        }
+
+        private fun findContextImpl(wrapper: Context): Context? {
+            var contextImpl = wrapper
+            while (contextImpl is ContextWrapper) {
+                contextImpl = contextImpl.baseContext
+            }
+
+            return contextImpl.takeIf { sImplClass?.isInstance(it) == true }
         }
     }
 
@@ -62,15 +80,6 @@ open class ModuleContextWrapper(
                 field("mMainThread")?.get(it) as? ActivityThread?
             }
         }
-    }
-
-    private fun findContextImpl(wrapper: Context): Context? {
-        var contextImpl = wrapper
-        while (contextImpl is ContextWrapper) {
-            contextImpl = contextImpl.baseContext
-        }
-
-        return contextImpl.takeIf { sImplClass?.isInstance(it) == true }
     }
 
     override fun getAssets(): AssetManager {
