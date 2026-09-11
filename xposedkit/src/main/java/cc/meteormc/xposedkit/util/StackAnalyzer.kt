@@ -52,7 +52,8 @@ object StackAnalyzer {
         return stackTrace.any { normalized == "${it.className}.${it.methodName}" }
     }
 
-    fun isCalledFrom(className: String?, methodName: String?): Boolean {
+    fun isCalledFrom(className: String? = null, methodName: String? = null): Boolean {
+        if (className == null && methodName == null) return false
         return stackTrace.any {
             if (className != null && className != it.className) return@any false
             if (methodName != null && methodName != it.methodName) return@any false
