@@ -110,11 +110,19 @@ class LSPosed : XposedInterface, LSPModule() {
         }
 
         val hooker = InterceptHooker(type, callback)
-        val identifier = HookIdentifier(
-            type,
-            if (priority == InvokeCallback.PRIORITY_NORMAL) PRIORITY_DEFAULT else priority
-        )
+        var normalizedPriority = priority
+        if (priority in -PRIORITY_DEFAULT..PRIORITY_DEFAULT) {
+            normalizedPriority = PRIORITY_DEFAULT
+        }
+        if (type == HookType.AFTER) {
+            normalizedPriority = when (normalizedPriority) {
+                Int.MIN_VALUE -> Int.MAX_VALUE
+                Int.MAX_VALUE -> Int.MIN_VALUE
+                else -> -normalizedPriority
+            }
+        }
 
+        val identifier = HookIdentifier(type, normalizedPriority)
         if (isHotReloading) {
             // 当热重载时 如果存在与之前相同参数的HookHandle
             // 则可以认为它们是同一个钩子（哪怕实际上可能不是同一个）
