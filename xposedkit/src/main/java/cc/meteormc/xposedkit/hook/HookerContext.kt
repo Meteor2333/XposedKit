@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalContracts::class)
+
 package cc.meteormc.xposedkit.hook
 
 import cc.meteormc.xposedkit.Reflect
@@ -5,6 +7,9 @@ import cc.meteormc.xposedkit.XposedKit
 import cc.meteormc.xposedkit.reflect
 import cc.meteormc.xposedkit.typedReflect
 import java.lang.reflect.Member
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 open class HookerContext(
     open val classLoader: ClassLoader,
@@ -16,10 +21,16 @@ open class HookerContext(
         get() = classLoader.reflect(this)
 
     inline fun <R> String.reflect(block: Reflect<*>.() -> R): R? {
+        contract {
+            callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+        }
         return classLoader.reflect(this, block)
     }
 
     inline fun <T : Any, R> String.typedReflect(block: Reflect<T>.() -> R): R? {
+        contract {
+            callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+        }
         return classLoader.typedReflect(this, block)
     }
 

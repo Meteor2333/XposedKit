@@ -1,4 +1,5 @@
 @file:Suppress("UNCHECKED_CAST")
+@file:OptIn(ExperimentalContracts::class)
 
 package cc.meteormc.xposedkit
 
@@ -11,6 +12,9 @@ import java.lang.reflect.Member
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.WeakHashMap
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.reflect.KClass
 
 private val cache = WeakHashMap<Class<*>, Reflect<*>>()
@@ -19,6 +23,9 @@ val <T : Any> Class<T>.reflect: Reflect<T>
     get() = cache.getOrPut(this) { Reflect(this) } as Reflect<T>
 
 inline fun <T : Any, R> Class<T>.reflect(block: Reflect<T>.() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     return reflect.run(block)
 }
 
@@ -26,6 +33,9 @@ val <T : Any> KClass<T>.reflect: Reflect<T>
     get() = this.java.reflect
 
 inline fun <T : Any, R> KClass<T>.reflect(block: Reflect<T>.() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     return this.java.reflect(block)
 }
 
@@ -72,6 +82,9 @@ fun ClassLoader.reflect(className: String): Reflect<*>? {
 }
 
 inline fun <R> ClassLoader.reflect(className: String, block: Reflect<*>.() -> R): R? {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
     return reflect(className)?.run(block)
 }
 
@@ -80,6 +93,9 @@ fun <T : Any> ClassLoader.typedReflect(className: String): Reflect<T>? {
 }
 
 inline fun <T : Any, R> ClassLoader.typedReflect(className: String, block: Reflect<T>.() -> R): R? {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
     return typedReflect<T>(className)?.run(block)
 }
 
